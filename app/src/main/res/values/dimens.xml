@@ -3,4 +3,8 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="poster_width">300dp</dimen>
+    <dimen name="poster_height">400dp</dimen>
+    <dimen name="poster_size">92dp</dimen>
+    <!--"w92", "w154", "w185", "w342", "w500", "w780"-->
 </resources>

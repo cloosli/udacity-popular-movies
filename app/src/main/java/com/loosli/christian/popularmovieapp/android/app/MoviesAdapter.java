@@ -22,12 +22,15 @@ public class MoviesAdapter extends BaseAdapter {
     private final List<String> mMovies;
     private final int mHeight;
     private final int mWidth;
+    private String mBasePosterUrl;
 
     public MoviesAdapter(Activity context) {
         mContext = context;
         mMovies = new ArrayList<String>();
         mHeight = Math.round(mContext.getResources().getDimension(R.dimen.poster_height));
         mWidth = Math.round(mContext.getResources().getDimension(R.dimen.poster_width));
+        int posterSize = 185; //342;//(int) mContext.getResources().getDimension(R.dimen.poster_size);
+        mBasePosterUrl = "http://image.tmdb.org/t/p/w" + posterSize + "/";
     }
 
     public void addAll(Collection<String> xs) {
@@ -66,14 +69,16 @@ public class MoviesAdapter extends BaseAdapter {
             imageView = new ImageView(mContext);
             imageView.setLayoutParams(new GridView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             //imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setScaleType(ImageView.ScaleType.FIT_START);
+            imageView.setAdjustViewBounds(true);
         } else {
             imageView = (ImageView) convertView;
         }
         //Uri posterUri = Uri.parse(movie).buildUpon().build();
         Picasso.with(mContext)
-                .load(movie)
+                .load(mBasePosterUrl + movie)
                 .placeholder(R.drawable.empty_photo)
+                        //.fit().centerInside()
                 .into(imageView);
 
         return imageView;
