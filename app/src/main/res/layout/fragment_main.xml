@@ -11,9 +11,8 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:horizontalSpacing="0dp"
-        android:numColumns="2"
+        android:numColumns="@integer/movies_gridview_columns"
         android:stretchMode="columnWidth"
-        android:minHeight="300dp"
         android:textAlignment="center"
         android:verticalSpacing="0dp" />
 </FrameLayout><!--
