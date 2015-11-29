@@ -28,6 +28,10 @@ public class MovieDetailActivityFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_movie_detail, container, false);
         // The detail Activity called via intent.  Inspect the intent for movie data.
+
+        int imageWidth = getActivity().getResources().getDimensionPixelSize(R.dimen.movie_thumb_width);
+        int imageHeight = getActivity().getResources().getDimensionPixelSize(R.dimen.movie_thumb_height);
+
         Intent intent = getActivity().getIntent();
         if (intent != null && intent.hasExtra(BundleKeys.MOVIE)) {
             Movie movie = intent.getParcelableExtra(BundleKeys.MOVIE);
@@ -42,8 +46,12 @@ public class MovieDetailActivityFragment extends Fragment {
 
             Picasso.with(getActivity())
                     .load("http://image.tmdb.org/t/p/w185/" + movie.getPosterPath())
-                    .placeholder(R.drawable.empty_photo)
+                    .resize(imageWidth, imageHeight)
                     .into((ImageView) rootView.findViewById(R.id.movie_detail_poster));
+
+            Picasso.with(getActivity())
+                    .load("http://image.tmdb.org/t/p/w185/" + movie.getBackdropPath())
+                    .into((ImageView) rootView.findViewById(R.id.backdrop));
         }
         return rootView;
     }
