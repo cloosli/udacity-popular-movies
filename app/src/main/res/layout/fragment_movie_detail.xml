@@ -1,0 +1,62 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MovieDetailActivityFragment"
+    tools:showIn="@layout/activity_movie_detail">
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Movie Title"
+        android:id="@+id/movie_detail_titel"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/movie_detail_poster"
+        android:layout_below="@+id/movie_detail_titel"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="28dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Description"
+        android:id="@+id/movie_detail_description"
+        android:layout_below="@+id/movie_detail_poster"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="28dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="release date"
+        android:id="@+id/movie_detail_release_date"
+        android:layout_alignTop="@+id/movie_detail_poster"
+        android:layout_alignLeft="@+id/movie_detail_titel"
+        android:layout_alignStart="@+id/movie_detail_titel"
+        android:layout_marginLeft="50dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="25dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/md_vote_average"
+        android:id="@+id/movie_detail_vote_average"
+        android:layout_below="@+id/movie_detail_release_date"
+        android:layout_alignLeft="@+id/movie_detail_release_date"
+        android:layout_alignStart="@+id/movie_detail_release_date" />
+</RelativeLayout>

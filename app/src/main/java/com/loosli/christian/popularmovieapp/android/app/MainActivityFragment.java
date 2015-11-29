@@ -1,5 +1,6 @@
 package com.loosli.christian.popularmovieapp.android.app;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,7 +14,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.Toast;
+
+import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,9 +27,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Random;
+import java.util.Date;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -36,7 +39,8 @@ public class MainActivityFragment extends Fragment {
 
     private MoviesAdapter mMoviesAdapter;
 
-    public MainActivityFragment() { }
+    public MainActivityFragment() {
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -72,8 +76,11 @@ public class MainActivityFragment extends Fragment {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String movie = mMoviesAdapter.getItem(position);
-                Toast.makeText(getActivity(), movie + " " + position, Toast.LENGTH_SHORT).show();
+                Movie movie = mMoviesAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
+                intent.putExtra(BundleKeys.MOVIE, movie);
+                //ActivityOptions opts = ActivityOptions.makeScaleUpAnimation(view, 0, 0, view.getWidth(), view.getHeight());
+                getActivity().startActivity(intent);
             }
         });
         return rootView;
@@ -83,7 +90,7 @@ public class MainActivityFragment extends Fragment {
         FetchMoviesTask task = new FetchMoviesTask();
         //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         //String location = prefs.getString(getString(R.string.pref_sorting_key), getString(R.string.pref_sorting_default));
-        task.execute("popularity.desc", Integer.toString(new Random().nextInt(20)));
+        task.execute("popularity.desc", "1");
     }
 
     @Override
@@ -92,61 +99,59 @@ public class MainActivityFragment extends Fragment {
         updateMovies();
     }
 
-    public class FetchMoviesTask extends AsyncTask<String, Void, String[]> {
+    public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
         private final String LOG_TAG = FetchMoviesTask.class.getSimpleName();
 
-        /* The date/time conversion code is going to be moved outside the asynctask later,
-        * so for convenience we're breaking it out into its own method now.
-        */
-        private String getReadableDateString(long time) {
-            // Because the API returns a unix timestamp (measured in seconds),
-            // it must be converted to milliseconds in order to be converted to valid date.
-            SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("EEE MMM dd");
-            return shortenedDateFormat.format(time);
-        }
-
         /**
-         * Take the String representing the complete forecast in JSON Format and
+         * Take the String representing the complete movies in JSON Format and
          * pull out the data we need to construct the Strings needed for the wireframes.
-         * <p/>
+         * <p>
          * Fortunately parsing is easy:  constructor takes the JSON string and converts it
          * into an Object hierarchy for us.
          */
-        private String[] getMoviesPosterDataFromJson(String moviesJsonStr)
+        private Movie[] getMoviesPosterDataFromJson(String moviesJsonStr)
                 throws JSONException {
 
             // These are the names of the JSON objects that need to be extracted.
-
-            final String OWM_PAGE = "page";
-            final String OWM_TOTAL_PAGES="total_pages";
-            final String OWM_RESULTS = "results";
-            final String OWM_ORIG_TITLE = "original_title";
-            final String OWM_TITLE = "title";
-            final String OWM_POSTER = "poster_path";
+            final String MDB_RESULTS = "results";
+            final String MDB_PAGE = "page";
+            final String MDB_TOTAL_PAGES = "total_pages";
+            final String MDB_ID = "id";
+            final String MDB_TITLE = "original_title";
+            final String MDB_DESCRIPTION = "overview";
+            final String MDB_POSTER_PATH = "poster_path";
+            final String MDB_BACKDROP_PATH = "backdrop_path";
+            final String MDB_RELEASE_DATE = "release_date";
+            final String MDB_RATING = "vote_average";
 
 
             JSONObject moviesJson = new JSONObject(moviesJsonStr);
-            JSONArray moviesArray = moviesJson.getJSONArray(OWM_RESULTS);
+            JSONArray moviesArray = moviesJson.getJSONArray(MDB_RESULTS);
             final int moviesArraySize = moviesArray.length();
-            final String[] resultStrs = new String[moviesArraySize];
+            final Movie[] resultStrs = new Movie[moviesArraySize];
             for (int i = 0; i < moviesArraySize; i++) {
 
                 // Get the JSON object representing the movie
-                JSONObject movie = moviesArray.getJSONObject(i);
-                String posterPath = movie.getString(OWM_POSTER);
-                String title = movie.getString(OWM_TITLE);
-                Log.v(LOG_TAG, "Movie: " + title + " Poster: " + posterPath);
+                JSONObject movieJson = moviesArray.getJSONObject(i);
+                Movie movie = new Movie();
+                movie.setId(movieJson.getLong(MDB_ID));
+                movie.setTitle(movieJson.getString(MDB_TITLE));
+                movie.setOverview(movieJson.getString(MDB_DESCRIPTION));
+                movie.setPosterPath(movieJson.getString(MDB_POSTER_PATH));
+                movie.setBackdropPath(movieJson.getString(MDB_BACKDROP_PATH));
+                movie.setRating((float) movieJson.getDouble(MDB_RATING));
+                Date releaseDate = null;
+                String date = movieJson.getString(MDB_RELEASE_DATE);
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                try {
+                    releaseDate = formatter.parse(date);
+                } catch (ParseException e) {
+                    Log.e(LOG_TAG, "Parsing failed: " + Log.getStackTraceString(e));
+                    releaseDate = new Date();
+                }
+                movie.setReleaseDate(releaseDate);
 
-                // The date/time is returned as a long.  We need to convert that
-                // into something human-readable, since most people won't read "1400356800" as
-                // "this saturday".
-                //long dateTime;
-                // Cheating to convert this to UTC time, which is what we want anyhow
-                //dateTime = dayTime.setJulianDay(julianStartDay + i);
-                //day = getReadableDateString(dateTime);
-
-
-                resultStrs[i] = posterPath;
+                resultStrs[i] = movie;
             }
 
             return resultStrs;
@@ -154,7 +159,7 @@ public class MainActivityFragment extends Fragment {
         }
 
         @Override
-        protected String[] doInBackground(String... params) {
+        protected Movie[] doInBackground(String... params) {
 
             //If there's no sort definition, there's nothing to loop up. Verify size of params.
             if (params.length < 2) {
@@ -171,18 +176,19 @@ public class MainActivityFragment extends Fragment {
             try {
                 // Construct the URL for the TheMovieDB API query
                 // http://api.themoviedb.org/3/discover/movie?
-                final String FORECAST_BASE_URL = "http://api.themoviedb.org/3/discover/movie?";
+                final String THEMOVIEDB_BASE_URL = "http://api.themoviedb.org/3/discover/movie?";
                 final String SORT_PARAM = "sort_by";
                 final String PAGE_PARAM = "page";
                 final String APPID_PARAM = "api_key";
 
-                Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                Uri builtUri = Uri.parse(THEMOVIEDB_BASE_URL).buildUpon()
                         .appendQueryParameter(SORT_PARAM, params[0]) //popularity.desc
                         .appendQueryParameter(PAGE_PARAM, params[1]) //1
                         .appendQueryParameter(APPID_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
                         .build();
 
                 URL url = new URL(builtUri.toString());
+                Log.v(LOG_TAG, url.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -240,7 +246,7 @@ public class MainActivityFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(String[] s) {
+        protected void onPostExecute(Movie[] s) {
             if (s != null) {
                 mMoviesAdapter.addAll(Arrays.asList(s));
             }
