@@ -3,6 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_sort"
+        android:icon="@drawable/ic_sort_white_48dp"
         android:title="@string/action_sort"
-        app:showAsAction="ifRoom"></item>
+        app:showAsAction="ifRoom">
+        <menu>
+            <item
+                android:id="@+id/action_sort_popularity"
+                android:checked="true"
+                android:title="@string/sort_popularity" />
+            <item
+                android:id="@+id/action_sort_rating"
+                android:title="@string/sort_rating" />
+        </menu>
+    </item>
 </menu>

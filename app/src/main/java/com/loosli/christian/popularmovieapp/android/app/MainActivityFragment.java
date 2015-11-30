@@ -39,6 +39,28 @@ public class MainActivityFragment extends Fragment {
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private MoviesAdapter mMoviesAdapter;
     private int mTotalPageNumber = 1000;
+    private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
+
+    public void setSortCriteria(SortCriteria criteria) {
+        if (mSortCriteria != criteria) {
+            mSortCriteria = criteria;
+            updateMovies(1);
+        }
+    }
+
+    public enum SortCriteria {
+        POPULARITY("popularity.desc"), RATING("vote_average.desc");
+        public final String name;
+
+        SortCriteria(String name) {
+            this.name = name;
+        }
+
+        public String toString() {
+            return this.name;
+        }
+    }
+
 
     public MainActivityFragment() {
     }
@@ -58,7 +80,12 @@ public class MainActivityFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
 
-        if (id == R.id.action_sort) {
+        if (id == R.id.action_sort_popularity) {
+            setSortCriteria(SortCriteria.POPULARITY);
+            return true;
+        }
+        if (id == R.id.action_sort_rating) {
+            setSortCriteria(SortCriteria.RATING);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -107,7 +134,8 @@ public class MainActivityFragment extends Fragment {
             FetchMoviesTask task = new FetchMoviesTask();
             //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             //String sortBy = prefs.getString(getString(R.string.pref_sorting_key), getString(R.string.pref_sorting_default));
-            task.execute("popularity.desc", Integer.toString(page));
+
+            task.execute(mSortCriteria.toString(), Integer.toString(page));
         }
     }
 
@@ -141,7 +169,7 @@ public class MainActivityFragment extends Fragment {
             final String MDB_BACKDROP_PATH = "backdrop_path";
             final String MDB_RELEASE_DATE = "release_date";
             final String MDB_RATING = "vote_average";
-
+            final String MDB_POPULARITY = "popularity";
 
             JSONObject moviesJson = new JSONObject(moviesJsonStr);
             int totalPages = moviesJson.getInt(MDB_TOTAL_PAGES);
@@ -171,6 +199,10 @@ public class MainActivityFragment extends Fragment {
                 }
                 movie.setReleaseDate(releaseDate);
 
+                if (BuildConfig.DEBUG) {
+                    Log.v(LOG_TAG, "MDB_POPULARITY=" + movieJson.getString(MDB_POPULARITY) + "\t MDB_RATING= " + movie.getRating());
+                }
+
                 resultStrs[i] = movie;
             }
 
@@ -198,11 +230,13 @@ public class MainActivityFragment extends Fragment {
                 final String THEMOVIEDB_BASE_URL = "http://api.themoviedb.org/3/discover/movie?";
                 final String SORT_PARAM = "sort_by";
                 final String PAGE_PARAM = "page";
+                final String MINVOTECOUNT_PARAM = "vote_count.gte";
                 final String APPID_PARAM = "api_key";
 
                 Uri builtUri = Uri.parse(THEMOVIEDB_BASE_URL).buildUpon()
                         .appendQueryParameter(SORT_PARAM, params[0]) //popularity.desc
                         .appendQueryParameter(PAGE_PARAM, params[1]) //1
+                        .appendQueryParameter(MINVOTECOUNT_PARAM, "200")
                         .appendQueryParameter(APPID_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
                         .build();
 
