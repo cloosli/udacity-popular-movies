@@ -57,8 +57,7 @@ public class MainActivityFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
 
-        if (id == R.id.action_refresh) {
-            updateMovies();
+        if (id == R.id.action_sort) {
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -79,7 +78,6 @@ public class MainActivityFragment extends Fragment {
                 Movie movie = mMoviesAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
                 intent.putExtra(BundleKeys.MOVIE, movie);
-                //ActivityOptions opts = ActivityOptions.makeScaleUpAnimation(view, 0, 0, view.getWidth(), view.getHeight());
                 getActivity().startActivity(intent);
             }
         });
@@ -89,7 +87,7 @@ public class MainActivityFragment extends Fragment {
     private void updateMovies() {
         FetchMoviesTask task = new FetchMoviesTask();
         //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        //String location = prefs.getString(getString(R.string.pref_sorting_key), getString(R.string.pref_sorting_default));
+        //String sortBy = prefs.getString(getString(R.string.pref_sorting_key), getString(R.string.pref_sorting_default));
         task.execute("popularity.desc", "1");
     }
 
