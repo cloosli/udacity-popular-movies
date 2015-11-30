@@ -36,8 +36,9 @@ import java.util.Date;
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
-
+    private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private MoviesAdapter mMoviesAdapter;
+    private int mTotalPageNumber = 1000;
 
     public MainActivityFragment() {
     }
@@ -81,20 +82,39 @@ public class MainActivityFragment extends Fragment {
                 getActivity().startActivity(intent);
             }
         });
+        gridView.setOnScrollListener(new EndlessScrollListener() {
+            @Override
+            public boolean onLoadMore(int page, int totalItemsCount) {
+                loadMoreMoviesFromApi(page);
+                return true;
+            }
+        });
         return rootView;
     }
 
-    private void updateMovies() {
-        FetchMoviesTask task = new FetchMoviesTask();
-        //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        //String sortBy = prefs.getString(getString(R.string.pref_sorting_key), getString(R.string.pref_sorting_default));
-        task.execute("popularity.desc", "1");
+    private void loadMoreMoviesFromApi(int offset) {
+        updateMovies(offset);
+    }
+
+    private void updateMovies(int page) {
+        Log.v(LOG_TAG, "fetsch more movies page: " + page + " mTotalPageNumber: " + mTotalPageNumber);
+        if (page <= 1) {
+            Log.v(LOG_TAG, "clear data on moviesAdapter, current count: " + mMoviesAdapter.getCount());
+            mMoviesAdapter.clearData();
+            mMoviesAdapter.notifyDataSetChanged();
+        }
+        if (mTotalPageNumber == 0 || page <= mTotalPageNumber) {
+            FetchMoviesTask task = new FetchMoviesTask();
+            //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            //String sortBy = prefs.getString(getString(R.string.pref_sorting_key), getString(R.string.pref_sorting_default));
+            task.execute("popularity.desc", Integer.toString(page));
+        }
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        updateMovies();
+        updateMovies(1);
     }
 
     public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
@@ -124,6 +144,8 @@ public class MainActivityFragment extends Fragment {
 
 
             JSONObject moviesJson = new JSONObject(moviesJsonStr);
+            int totalPages = moviesJson.getInt(MDB_TOTAL_PAGES);
+            mTotalPageNumber = totalPages < mTotalPageNumber ? totalPages : mTotalPageNumber;
             JSONArray moviesArray = moviesJson.getJSONArray(MDB_RESULTS);
             final int moviesArraySize = moviesArray.length();
             final Movie[] resultStrs = new Movie[moviesArraySize];
@@ -153,7 +175,6 @@ public class MainActivityFragment extends Fragment {
             }
 
             return resultStrs;
-
         }
 
         @Override

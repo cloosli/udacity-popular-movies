@@ -82,4 +82,8 @@ public class MoviesAdapter extends BaseAdapter {
 
         return imageView;
     }
+
+    public void clearData() {
+        mMovies.clear();
+    }
 }
