@@ -4,5 +4,17 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="movie_thumb_height">138dp</dimen>
     <dimen name="movie_thumb_width">92dp</dimen>
-    <!--"w92", "w154", "w185", "w342", "w500", "w780"-->
+
+    <dimen name="margin_inline">4dp</dimen>
+    <dimen name="margin_default">8dp</dimen>
+    <dimen name="margin_large">16dp</dimen>
+
+    <!-- specific view dimensions and spacing -->
+    <dimen name="details_backdrop_height">200dp</dimen>
+    <dimen name="details_poster_width">100dp</dimen>
+    <dimen name="details_poster_height">150dp</dimen>
+    <dimen name="details_poster_margin_top">172dp</dimen>
+
+    <!-- misc dimensions -->
+    <item name="body_text_line_spacing" format="float" type="dimen">1.15</item>
 </resources>
