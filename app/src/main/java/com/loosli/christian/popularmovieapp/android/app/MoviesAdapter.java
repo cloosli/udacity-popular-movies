@@ -10,7 +10,6 @@ import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 import com.loosli.christian.popularmovieapp.android.app.util.Util;
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -24,9 +23,9 @@ public class MoviesAdapter extends BaseAdapter {
     //private final int mHeight;
     private final int mWidth;
 
-    public MoviesAdapter(Activity context) {
+    public MoviesAdapter(Activity context, List<Movie> movies) {
         mContext = context;
-        mMovies = new ArrayList<Movie>();
+        mMovies = movies;
         //mHeight = Math.round(mContext.getResources().getDimension(R.dimen.poster_height));
         mWidth = Math.round(Util.getScreenWidth(mContext)/2);
         //TODO: check connectivity speed
@@ -85,5 +84,9 @@ public class MoviesAdapter extends BaseAdapter {
 
     public void clearData() {
         mMovies.clear();
+    }
+
+    public List<Movie> getItems() {
+        return mMovies;
     }
 }
