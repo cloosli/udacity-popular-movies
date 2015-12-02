@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,17 +30,24 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
+    private static final String STATE_MOVIES = "state_movies";
+    private static final String STATE_SELECTED_POSITION = "state_selected_position";
+
     private MoviesAdapter mMoviesAdapter;
+    private GridView mGridView;
     private int mTotalPageNumber = 1000;
     private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
+    int mSelectedPosition = -1;
 
     public void setSortCriteria(SortCriteria criteria) {
         if (mSortCriteria != criteria) {
@@ -96,20 +104,18 @@ public class MainActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mMoviesAdapter = new MoviesAdapter(getActivity());
-
-        GridView gridView = (GridView) rootView.findViewById(R.id.movies_gridview);
-        gridView.setAdapter(mMoviesAdapter);
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mGridView = (GridView) rootView.findViewById(R.id.movies_gridview);
+        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                mSelectedPosition = position;
                 Movie movie = mMoviesAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
                 intent.putExtra(BundleKeys.MOVIE, movie);
                 getActivity().startActivity(intent);
             }
         });
-        gridView.setOnScrollListener(new EndlessScrollListener() {
+        mGridView.setOnScrollListener(new EndlessScrollListener() {
             @Override
             public boolean onLoadMore(int page, int totalItemsCount) {
                 loadMoreMoviesFromApi(page);
@@ -117,6 +123,30 @@ public class MainActivityFragment extends Fragment {
             }
         });
         return rootView;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        List<Movie> movies;
+        if (savedInstanceState != null) {
+            movies = savedInstanceState.getParcelableArrayList(STATE_MOVIES);
+            mSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+        } else {
+            movies = new ArrayList<>();
+        }
+        mMoviesAdapter = new MoviesAdapter(getActivity(), movies);
+        mGridView.setAdapter(mMoviesAdapter);
+        if (mSelectedPosition > 1) {
+            mGridView.smoothScrollToPosition(mSelectedPosition);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(STATE_MOVIES, new ArrayList<Parcelable>(mMoviesAdapter.getItems()));
+        outState.putInt(STATE_SELECTED_POSITION, mSelectedPosition);
     }
 
     private void loadMoreMoviesFromApi(int offset) {
@@ -151,7 +181,7 @@ public class MainActivityFragment extends Fragment {
         /**
          * Take the String representing the complete movies in JSON Format and
          * pull out the data we need to construct the Strings needed for the wireframes.
-         * <p>
+         * <p/>
          * Fortunately parsing is easy:  constructor takes the JSON string and converts it
          * into an Object hierarchy for us.
          */
