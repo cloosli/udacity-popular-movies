@@ -1,11 +1,15 @@
 package com.loosli.christian.popularmovieapp.android.app.util;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.WindowManager;
+
+import com.loosli.christian.popularmovieapp.android.app.BuildConfig;
 
 /**
  * Created by ChristianL on 30.11.15.
@@ -73,9 +77,9 @@ public class Util {
     }
 
     private static <T extends TMDbImageWidth> String buildImageUrl(String imagePath, T tmdbImageWidth) {
-//        if (BuildConfig.DEBUG) {
-//            Log.d("Picasso", "Loading image of width " + tmdbImageWidth.getMaxWidth() + "px");
-//        }
+        if (BuildConfig.DEBUG) {
+            Log.d("Picasso", "Loading image of width " + tmdbImageWidth.getMaxWidth() + "px");
+        }
         String relativePath = tmdbImageWidth.getWidthString() + "/" + imagePath;
         return Uri.withAppendedPath(TMDB_IMAGE_BASE_URI, relativePath).toString();
     }
@@ -95,6 +99,33 @@ public class Util {
         return Color.argb(alpha, red, green, blue);
     }
 
+    /**
+     * This method converts dp unit to equivalent pixels, depending on device density.
+     *
+     * @param dp A value in dp (density independent pixels) unit. Which we need to convert into pixels
+     * @param context Context to get resources and device specific display metrics
+     * @return A float value to represent px equivalent to dp depending on device density
+     */
+    public static float convertDpToPixel(float dp, Context context){
+        Resources resources = context.getResources();
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        float px = dp * (metrics.densityDpi / 160f);
+        return px;
+    }
+
+    /**
+     * This method converts device specific pixels to density independent pixels.
+     *
+     * @param px A value in px (pixels) unit. Which we need to convert into db
+     * @param context Context to get resources and device specific display metrics
+     * @return A float value to represent dp equivalent to px value
+     */
+    public static float convertPixelsToDp(float px, Context context){
+        Resources resources = context.getResources();
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        float dp = px / (metrics.densityDpi / 160f);
+        return dp;
+    }
 
     // private methods
 
