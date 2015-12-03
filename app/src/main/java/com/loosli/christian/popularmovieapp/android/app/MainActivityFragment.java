@@ -39,14 +39,13 @@ import java.util.Date;
 public class MainActivityFragment extends Fragment {
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private static final String STATE_MOVIES = "state_movies";
-    private static final String STATE_SELECTED_POSITION = "state_selected_position";
+    private static final String STATE_SORT_CRITERIA = "state_sort_criteria";
     private static final String STATE_START_PAGE = "state_start_page";
 
     private MoviesAdapter mMoviesAdapter;
     private ArrayList<Movie> mMovieList;
     private int mTotalPageNumber = 1000;
     private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
-    int mSelectedPosition = -1;
     int mStartPage = 0;
 
     public void setSortCriteria(SortCriteria criteria) {
@@ -84,15 +83,13 @@ public class MainActivityFragment extends Fragment {
             mMovieList = new ArrayList<>();
         }
         Log.v(LOG_TAG, "onCreate > mMovieList size=" + mMovieList.size());
-        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_SELECTED_POSITION)) {
-            mSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
-        } else {
-            mSelectedPosition = -1;
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_SORT_CRITERIA)) {
+            mSortCriteria = SortCriteria.valueOf(savedInstanceState.getString(STATE_SORT_CRITERIA));
         }
         if (savedInstanceState != null && savedInstanceState.containsKey(STATE_START_PAGE)) {
             mStartPage = savedInstanceState.getInt(STATE_START_PAGE);
         }
-        Log.v(LOG_TAG, "onCreate > mStartPage=" + mStartPage);
+        Log.v(LOG_TAG, "onCreate > mStartPage=" + mStartPage + " mSortCriteria=" + mSortCriteria.toString());
     }
 
     @Override
@@ -127,7 +124,6 @@ public class MainActivityFragment extends Fragment {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mSelectedPosition = position;
                 Movie movie = mMoviesAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
                 intent.putExtra(BundleKeys.MOVIE, movie);
@@ -139,7 +135,7 @@ public class MainActivityFragment extends Fragment {
             @Override
             public boolean onLoadMore(int page, int totalItemsCount) {
                 Log.v(LOG_TAG, "EndlessScrollListener.onLoadMore(" + page + ", " + totalItemsCount + ")");
-                mStartPage = page-1;
+                mStartPage = page - 1;
                 loadMoreMoviesFromApi(page);
                 return true;
             }
@@ -151,7 +147,7 @@ public class MainActivityFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelableArrayList(STATE_MOVIES, mMovieList);
-        outState.putInt(STATE_SELECTED_POSITION, mSelectedPosition);
+        outState.putString(STATE_SORT_CRITERIA, mSortCriteria.name());
         outState.putInt(STATE_START_PAGE, mStartPage);
         Log.v(LOG_TAG, "onSaveInstanceState() > mStartPage: " + mStartPage);
     }
@@ -219,9 +215,10 @@ public class MainActivityFragment extends Fragment {
         /**
          * Take the String representing the complete movies in JSON Format and
          * pull out the data we need to construct the Strings needed for the wireframes.
-         * <p/>
+         * <p>
          * Fortunately parsing is easy:  constructor takes the JSON string and converts it
          * into an Object hierarchy for us.
+         * </p>
          */
         private Movie[] getMoviesPosterDataFromJson(String moviesJsonStr)
                 throws JSONException {
@@ -369,13 +366,9 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(Movie[] s) {
             if (s != null) {
-                Log.v(LOG_TAG, "onPostExecute() mMovieList size: " + mMovieList.size() + " + " + s.length);
                 mMovieList.addAll(Arrays.asList(s));
                 mMoviesAdapter.notifyDataSetChanged();
-                Log.v(LOG_TAG, "onPostExecute() mMovieList size: " + mMovieList.size());
-                //mMoviesAdapter.addAll(Arrays.asList(s));
-                Log.v(LOG_TAG, "onPostExecute() mMoviesAdapter size: " + mMoviesAdapter.getCount());
-                //mStartPage = mStartPage+1;
+                Log.v(LOG_TAG, "onPostExecute() mMovieList size: " + mMovieList.size() + " mMoviesAdapter size: " + mMoviesAdapter.getCount());
             }
         }
     }
