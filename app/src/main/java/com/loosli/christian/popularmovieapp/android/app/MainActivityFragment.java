@@ -95,6 +95,13 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.movies_fragment, menu);
+//        if (mSortCriteria == SortCriteria.POPULARITY) {
+//            MenuItem item = menu.findItem(R.id.action_sort_popularity);
+//            item.setEnabled(false);
+//        } else {
+//            MenuItem item = menu.findItem(R.id.action_sort_rating);
+//            item.setEnabled(false);
+//        }
     }
 
     @Override
@@ -301,7 +308,7 @@ public class MainActivityFragment extends Fragment {
                 Uri builtUri = Uri.parse(THEMOVIEDB_BASE_URL).buildUpon()
                         .appendQueryParameter(SORT_PARAM, params[0]) //popularity.desc
                         .appendQueryParameter(PAGE_PARAM, params[1]) //1
-                        .appendQueryParameter(MINVOTECOUNT_PARAM, "2000")
+                        .appendQueryParameter(MINVOTECOUNT_PARAM, "300")
                         .appendQueryParameter(APPID_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
                         .build();
 
