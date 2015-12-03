@@ -18,6 +18,7 @@ import java.util.List;
  */
 public class MoviesAdapter extends BaseAdapter {
 
+    private static final String LOG_TAG = MoviesAdapter.class.getSimpleName();
     private final Activity mContext;
     private final List<Movie> mMovies;
     //private final int mHeight;
@@ -27,13 +28,10 @@ public class MoviesAdapter extends BaseAdapter {
         mContext = context;
         mMovies = movies;
         //mHeight = Math.round(mContext.getResources().getDimension(R.dimen.poster_height));
-        mWidth = Math.round(Util.getScreenWidth(mContext)/2);
+        // TODO set height with a ratio from width
+        //FIXME this works not if gridview set the column_width to 150dp, in landscape mode the column number is 3
+        mWidth = Math.round(Util.getScreenWidth(mContext) / 2);
         //TODO: check connectivity speed
-    }
-
-    public void addAll(Collection<Movie> xs) {
-        mMovies.addAll(xs);
-        notifyDataSetChanged();
     }
 
     @Override
@@ -80,6 +78,11 @@ public class MoviesAdapter extends BaseAdapter {
                 .into(imageView);
 
         return imageView;
+    }
+
+    public void addAll(Collection<Movie> xs) {
+        mMovies.addAll(xs);
+        notifyDataSetChanged();
     }
 
     public void clearData() {
