@@ -1,6 +1,7 @@
 package com.loosli.christian.popularmovieapp.android.app;
 
 import android.app.Activity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -29,9 +30,9 @@ public class MoviesAdapter extends BaseAdapter {
         mMovies = movies;
         //mHeight = Math.round(mContext.getResources().getDimension(R.dimen.poster_height));
         // TODO set height with a ratio from width
-        //FIXME this works not if gridview set the column_width to 150dp, in landscape mode the column number is 3
-        mWidth = Math.round(Util.getScreenWidth(mContext) / 2);
-        //TODO: check connectivity speed
+        mWidth = Math.round(Util.convertDpToPixel(150f, mContext));
+        Log.v(LOG_TAG, "MoviesAdapter > mWidth = " + mWidth + ", screenWidth = " + Util.getScreenWidth(mContext));
+        //TODO: check connectivity speed to load lower resolution
     }
 
     @Override
