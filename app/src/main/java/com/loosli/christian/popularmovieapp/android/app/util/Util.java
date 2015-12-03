@@ -5,10 +5,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.WindowManager;
-
-import com.loosli.christian.popularmovieapp.android.app.BuildConfig;
 
 /**
  * Created by ChristianL on 30.11.15.
@@ -76,9 +73,9 @@ public class Util {
     }
 
     private static <T extends TMDbImageWidth> String buildImageUrl(String imagePath, T tmdbImageWidth) {
-        if (BuildConfig.DEBUG) {
-            Log.d("Picasso", "Loading image of width " + tmdbImageWidth.getMaxWidth() + "px");
-        }
+//        if (BuildConfig.DEBUG) {
+//            Log.d("Picasso", "Loading image of width " + tmdbImageWidth.getMaxWidth() + "px");
+//        }
         String relativePath = tmdbImageWidth.getWidthString() + "/" + imagePath;
         return Uri.withAppendedPath(TMDB_IMAGE_BASE_URI, relativePath).toString();
     }

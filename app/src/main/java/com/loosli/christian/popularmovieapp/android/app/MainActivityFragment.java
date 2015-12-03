@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,7 +32,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -42,12 +40,14 @@ public class MainActivityFragment extends Fragment {
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private static final String STATE_MOVIES = "state_movies";
     private static final String STATE_SELECTED_POSITION = "state_selected_position";
+    private static final String STATE_START_PAGE = "state_start_page";
 
     private MoviesAdapter mMoviesAdapter;
-    private GridView mGridView;
+    private ArrayList<Movie> mMovieList;
     private int mTotalPageNumber = 1000;
     private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
     int mSelectedPosition = -1;
+    int mStartPage = 0;
 
     public void setSortCriteria(SortCriteria criteria) {
         if (mSortCriteria != criteria) {
@@ -75,8 +75,24 @@ public class MainActivityFragment extends Fragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.v(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_MOVIES)) {
+            mMovieList = savedInstanceState.getParcelableArrayList(STATE_MOVIES);
+        } else {
+            mMovieList = new ArrayList<>();
+        }
+        Log.v(LOG_TAG, "onCreate > mMovieList size=" + mMovieList.size());
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_SELECTED_POSITION)) {
+            mSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+        } else {
+            mSelectedPosition = -1;
+        }
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_START_PAGE)) {
+            mStartPage = savedInstanceState.getInt(STATE_START_PAGE);
+        }
+        Log.v(LOG_TAG, "onCreate > mStartPage=" + mStartPage);
     }
 
     @Override
@@ -103,9 +119,12 @@ public class MainActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        mGridView = (GridView) rootView.findViewById(R.id.movies_gridview);
-        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mMoviesAdapter = new MoviesAdapter(getActivity(), mMovieList);
+        Log.v(LOG_TAG, "onCreateView() mMovieList size: " + mMovieList.size() + " mMoviesAdapter size: " + mMoviesAdapter.getCount() + " mStartPage=" + mStartPage);
+        GridView gridView = (GridView) rootView.findViewById(R.id.movies_gridview);
+        gridView.setAdapter(mMoviesAdapter);
+        Log.d(LOG_TAG, "gridView.getNumColumns() = " + gridView.getNumColumns());
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 mSelectedPosition = position;
@@ -115,9 +134,12 @@ public class MainActivityFragment extends Fragment {
                 getActivity().startActivity(intent);
             }
         });
-        mGridView.setOnScrollListener(new EndlessScrollListener() {
+        int visibleThreshold = 5;
+        gridView.setOnScrollListener(new EndlessScrollListener(visibleThreshold, mStartPage) {
             @Override
             public boolean onLoadMore(int page, int totalItemsCount) {
+                Log.v(LOG_TAG, "EndlessScrollListener.onLoadMore(" + page + ", " + totalItemsCount + ")");
+                mStartPage = page-1;
                 loadMoreMoviesFromApi(page);
                 return true;
             }
@@ -126,38 +148,50 @@ public class MainActivityFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        List<Movie> movies;
-        if (savedInstanceState != null) {
-            movies = savedInstanceState.getParcelableArrayList(STATE_MOVIES);
-            mSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
-        } else {
-            movies = new ArrayList<>();
-        }
-        mMoviesAdapter = new MoviesAdapter(getActivity(), movies);
-        mGridView.setAdapter(mMoviesAdapter);
-        if (mSelectedPosition > 1) {
-            mGridView.smoothScrollToPosition(mSelectedPosition);
-        }
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(STATE_MOVIES, mMovieList);
+        outState.putInt(STATE_SELECTED_POSITION, mSelectedPosition);
+        outState.putInt(STATE_START_PAGE, mStartPage);
+        Log.v(LOG_TAG, "onSaveInstanceState() > mStartPage: " + mStartPage);
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelableArrayList(STATE_MOVIES, new ArrayList<Parcelable>(mMoviesAdapter.getItems()));
-        outState.putInt(STATE_SELECTED_POSITION, mSelectedPosition);
+    public void onViewStateRestored(Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        Log.v(LOG_TAG, "onViewStateRestored");
+//        if (savedInstanceState != null) {
+//            mSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+//            List<Movie> movies = savedInstanceState.getParcelableArrayList(STATE_MOVIES);
+//            mMoviesAdapter = new MoviesAdapter(getActivity(), movies);
+//        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.v(LOG_TAG, "onResume");
+//        if (mSelectedPosition > 1) {
+//            int index = mGridView.getFirstVisiblePosition();
+//            View v = mGridView.getChildAt(0);
+//            int top = (v == null) ? 0 : (v.getTop() - mGridView.getPaddingTop());
+//            mGridView.setSelectionFromTop(index, top);
+//            mGridView.smoothScrollToPosition(mSelectedPosition);
+//        }
     }
 
     private void loadMoreMoviesFromApi(int offset) {
+        Log.v(LOG_TAG, "loadMoreMoviesFromApi(" + offset + ")");
         updateMovies(offset);
     }
 
     private void updateMovies(int page) {
-        Log.v(LOG_TAG, "fetsch more movies page: " + page + " mTotalPageNumber: " + mTotalPageNumber);
-        if (page <= 1) {
-            Log.v(LOG_TAG, "clear data on moviesAdapter, current count: " + mMoviesAdapter.getCount());
-            mMoviesAdapter.clearData();
+        Log.v(LOG_TAG, "updateMovies(" + page + ") > fetsch more mTotalPageNumber: " + mTotalPageNumber);
+        if (page <= 1 && mMovieList.isEmpty() == false) {
+            Log.v(LOG_TAG, "clear mMovieList, mMoviesAdapter size: " + mMoviesAdapter.getCount());
+//            mMoviesAdapter.clearData();
+            mStartPage = 0;
+            mMovieList.clear();
             mMoviesAdapter.notifyDataSetChanged();
         }
         if (mTotalPageNumber == 0 || page <= mTotalPageNumber) {
@@ -172,7 +206,11 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        updateMovies(1);
+        Log.v(LOG_TAG, "onStart()");
+        Log.v(LOG_TAG, "onStart() > mMovieList size: " + mMovieList.size() + " mStartPage=" + mStartPage);
+        if (mMovieList.isEmpty()) {
+            updateMovies(1);
+        }
     }
 
     public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
@@ -229,9 +267,9 @@ public class MainActivityFragment extends Fragment {
                 }
                 movie.setReleaseDate(releaseDate);
 
-                if (BuildConfig.DEBUG) {
-                    Log.v(LOG_TAG, "MDB_POPULARITY=" + movieJson.getString(MDB_POPULARITY) + "\t MDB_RATING= " + movie.getRating());
-                }
+//                if (BuildConfig.DEBUG) {
+//                    Log.v(LOG_TAG, "MDB_POPULARITY=" + movieJson.getString(MDB_POPULARITY) + "\t MDB_RATING= " + movie.getRating());
+//                }
 
                 resultStrs[i] = movie;
             }
@@ -266,7 +304,7 @@ public class MainActivityFragment extends Fragment {
                 Uri builtUri = Uri.parse(THEMOVIEDB_BASE_URL).buildUpon()
                         .appendQueryParameter(SORT_PARAM, params[0]) //popularity.desc
                         .appendQueryParameter(PAGE_PARAM, params[1]) //1
-                        .appendQueryParameter(MINVOTECOUNT_PARAM, "200")
+                        .appendQueryParameter(MINVOTECOUNT_PARAM, "2000")
                         .appendQueryParameter(APPID_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
                         .build();
 
@@ -331,7 +369,13 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(Movie[] s) {
             if (s != null) {
-                mMoviesAdapter.addAll(Arrays.asList(s));
+                Log.v(LOG_TAG, "onPostExecute() mMovieList size: " + mMovieList.size() + " + " + s.length);
+                mMovieList.addAll(Arrays.asList(s));
+                mMoviesAdapter.notifyDataSetChanged();
+                Log.v(LOG_TAG, "onPostExecute() mMovieList size: " + mMovieList.size());
+                //mMoviesAdapter.addAll(Arrays.asList(s));
+                Log.v(LOG_TAG, "onPostExecute() mMoviesAdapter size: " + mMoviesAdapter.getCount());
+                //mStartPage = mStartPage+1;
             }
         }
     }
