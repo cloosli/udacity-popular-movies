@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/details_backdrop_height"
             android:contentDescription="@string/content_desc_backdrop_image"
-            tools:background="#ddd" />
+            android:src="#D1C4E9" />
 
         <ImageView
             android:id="@+id/poster"
@@ -27,7 +27,7 @@
             android:layout_marginStart="@dimen/margin_large"
             android:layout_marginTop="@dimen/details_poster_margin_top"
             android:contentDescription="@string/content_desc_movie_poster"
-            tools:background="#ccc" />
+            android:src="#9575CD" />
 
         <TextView
             android:id="@+id/title"

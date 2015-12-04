@@ -52,6 +52,7 @@ public class MovieDetailActivityFragment extends Fragment {
         picasso.load(Util.buildPosterUrl(movie.getPosterPath(), posterWidth))
                 .resize(posterWidth, posterHeight)
                 .centerCrop()
+                .noPlaceholder()
                 .into(poster);
 
         int backdropWidth = Util.getScreenWidth(getActivity());
@@ -59,6 +60,7 @@ public class MovieDetailActivityFragment extends Fragment {
         picasso.load(Util.buildBackdropUrl(movie.getBackdropPath(), backdropWidth))
                 .resize(backdropWidth, backdropHeight)
                 .centerCrop()
+                .noPlaceholder()
                 .into(backdrop);
 
         getActivity().setTitle(movie.getTitle());
