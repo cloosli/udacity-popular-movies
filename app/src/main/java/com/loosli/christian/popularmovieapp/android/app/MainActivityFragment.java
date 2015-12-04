@@ -127,7 +127,7 @@ public class MainActivityFragment extends Fragment {
         mMoviesAdapter = new MoviesAdapter(getActivity(), mMovieList);
         Log.v(LOG_TAG, "onCreateView() mMovieList size: " + mMovieList.size() + " mMoviesAdapter size: " + mMoviesAdapter.getCount() + " mStartPage=" + mStartPage);
         mProgressBar = (ProgressBar)rootView.findViewById(R.id.progressBar);
-        mProgressBar.setIndeterminate(true);
+        mProgressBar.setVisibility(View.GONE);
         GridView gridView = (GridView) rootView.findViewById(R.id.movies_gridview);
         gridView.setAdapter(mMoviesAdapter);
         Log.d(LOG_TAG, "gridView.getNumColumns() = " + gridView.getNumColumns());
@@ -392,7 +392,7 @@ public class MainActivityFragment extends Fragment {
                 mMoviesAdapter.notifyDataSetChanged();
                 Log.v(LOG_TAG, "onPostExecute() mMovieList size: " + mMovieList.size() + " mMoviesAdapter size: " + mMoviesAdapter.getCount());
             }
-            mProgressBar.setVisibility(View.INVISIBLE);
+            mProgressBar.setVisibility(View.GONE);
         }
     }
 }
