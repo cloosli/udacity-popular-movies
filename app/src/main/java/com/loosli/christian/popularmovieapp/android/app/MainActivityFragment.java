@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.ProgressBar;
 
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 
@@ -118,13 +119,15 @@ public class MainActivityFragment extends Fragment {
         }
         return super.onOptionsItemSelected(item);
     }
-
+    private ProgressBar mProgressBar;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         mMoviesAdapter = new MoviesAdapter(getActivity(), mMovieList);
         Log.v(LOG_TAG, "onCreateView() mMovieList size: " + mMovieList.size() + " mMoviesAdapter size: " + mMoviesAdapter.getCount() + " mStartPage=" + mStartPage);
+        mProgressBar = (ProgressBar)rootView.findViewById(R.id.progressBar);
+        mProgressBar.setIndeterminate(true);
         GridView gridView = (GridView) rootView.findViewById(R.id.movies_gridview);
         gridView.setAdapter(mMoviesAdapter);
         Log.d(LOG_TAG, "gridView.getNumColumns() = " + gridView.getNumColumns());
@@ -218,6 +221,12 @@ public class MainActivityFragment extends Fragment {
 
     public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
         private final String LOG_TAG = FetchMoviesTask.class.getSimpleName();
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mProgressBar.setVisibility(View.VISIBLE);
+        }
 
         /**
          * Take the String representing the complete movies in JSON Format and
@@ -371,12 +380,19 @@ public class MainActivityFragment extends Fragment {
         }
 
         @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+            //mProgressBar.setProgress();
+        }
+
+        @Override
         protected void onPostExecute(Movie[] s) {
             if (s != null) {
                 mMovieList.addAll(Arrays.asList(s));
                 mMoviesAdapter.notifyDataSetChanged();
                 Log.v(LOG_TAG, "onPostExecute() mMovieList size: " + mMovieList.size() + " mMoviesAdapter size: " + mMoviesAdapter.getCount());
             }
+            mProgressBar.setVisibility(View.INVISIBLE);
         }
     }
 }

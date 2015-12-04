@@ -1,9 +1,15 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.loosli.christian.popularmovieapp.android.app.MainActivityFragment"
     tools:showIn="@layout/activity_main">
+
+    <ProgressBar
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/progressBar" />
 
     <GridView
         android:id="@+id/movies_gridview"
@@ -14,5 +20,8 @@
         android:horizontalSpacing="0dp"
         android:numColumns="auto_fit"
         android:stretchMode="columnWidth"
-        android:verticalSpacing="0dp" />
-</FrameLayout>
+        android:verticalSpacing="0dp"
+        android:layout_below="@+id/progressBar"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+</RelativeLayout>
