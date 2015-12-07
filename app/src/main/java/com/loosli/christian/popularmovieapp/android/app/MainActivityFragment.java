@@ -31,7 +31,6 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -45,9 +44,12 @@ public class MainActivityFragment extends Fragment {
 
     private MoviesAdapter mMoviesAdapter;
     private ArrayList<Movie> mMovieList;
+    private ProgressBar mProgressBar;
+
     private int mTotalPageNumber = 1000;
     private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
-    int mStartPage = 0;
+    private int mStartPage = 0;
+
 
     public void setSortCriteria(SortCriteria criteria) {
         if (mSortCriteria != criteria) {
@@ -119,7 +121,7 @@ public class MainActivityFragment extends Fragment {
         }
         return super.onOptionsItemSelected(item);
     }
-    private ProgressBar mProgressBar;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -166,24 +168,12 @@ public class MainActivityFragment extends Fragment {
     public void onViewStateRestored(Bundle savedInstanceState) {
         super.onViewStateRestored(savedInstanceState);
         Log.v(LOG_TAG, "onViewStateRestored");
-//        if (savedInstanceState != null) {
-//            mSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
-//            List<Movie> movies = savedInstanceState.getParcelableArrayList(STATE_MOVIES);
-//            mMoviesAdapter = new MoviesAdapter(getActivity(), movies);
-//        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
         Log.v(LOG_TAG, "onResume");
-//        if (mSelectedPosition > 1) {
-//            int index = mGridView.getFirstVisiblePosition();
-//            View v = mGridView.getChildAt(0);
-//            int top = (v == null) ? 0 : (v.getTop() - mGridView.getPaddingTop());
-//            mGridView.setSelectionFromTop(index, top);
-//            mGridView.smoothScrollToPosition(mSelectedPosition);
-//        }
     }
 
     private void loadMoreMoviesFromApi(int offset) {
@@ -195,16 +185,12 @@ public class MainActivityFragment extends Fragment {
         Log.v(LOG_TAG, "updateMovies(" + page + ") > fetsch more mTotalPageNumber: " + mTotalPageNumber);
         if (page <= 1 && mMovieList.isEmpty() == false) {
             Log.v(LOG_TAG, "clear mMovieList, mMoviesAdapter size: " + mMoviesAdapter.getCount());
-//            mMoviesAdapter.clearData();
             mStartPage = 0;
             mMovieList.clear();
             mMoviesAdapter.notifyDataSetChanged();
         }
         if (mTotalPageNumber == 0 || page <= mTotalPageNumber) {
             FetchMoviesTask task = new FetchMoviesTask();
-            //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            //String sortBy = prefs.getString(getString(R.string.pref_sorting_key), getString(R.string.pref_sorting_default));
-
             task.execute(mSortCriteria.toString(), Integer.toString(page));
         }
     }
@@ -219,7 +205,7 @@ public class MainActivityFragment extends Fragment {
         }
     }
 
-    public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
+    public class FetchMoviesTask extends AsyncTask<String, Void, ArrayList<Movie>> {
         private final String LOG_TAG = FetchMoviesTask.class.getSimpleName();
 
         @Override
@@ -236,12 +222,12 @@ public class MainActivityFragment extends Fragment {
          * into an Object hierarchy for us.
          * </p>
          */
-        private Movie[] getMoviesPosterDataFromJson(String moviesJsonStr)
+        private ArrayList<Movie> getMoviesPosterDataFromJson(String moviesJsonStr)
                 throws JSONException {
 
             // These are the names of the JSON objects that need to be extracted.
             final String MDB_RESULTS = "results";
-            final String MDB_PAGE = "page";
+//            final String MDB_PAGE = "page";
             final String MDB_TOTAL_PAGES = "total_pages";
             final String MDB_ID = "id";
             final String MDB_TITLE = "original_title";
@@ -257,7 +243,7 @@ public class MainActivityFragment extends Fragment {
             mTotalPageNumber = totalPages < mTotalPageNumber ? totalPages : mTotalPageNumber;
             JSONArray moviesArray = moviesJson.getJSONArray(MDB_RESULTS);
             final int moviesArraySize = moviesArray.length();
-            final Movie[] resultStrs = new Movie[moviesArraySize];
+            final ArrayList<Movie> movies = new ArrayList<>(moviesArraySize);
             for (int i = 0; i < moviesArraySize; i++) {
 
                 // Get the JSON object representing the movie
@@ -280,18 +266,18 @@ public class MainActivityFragment extends Fragment {
                 }
                 movie.setReleaseDate(releaseDate);
 
-//                if (BuildConfig.DEBUG) {
-//                    Log.v(LOG_TAG, "MDB_POPULARITY=" + movieJson.getString(MDB_POPULARITY) + "\t MDB_RATING= " + movie.getRating());
-//                }
+                if (BuildConfig.DEBUG) {
+                    Log.v(LOG_TAG, "MDB_POPULARITY=" + movieJson.getString(MDB_POPULARITY) + "\t MDB_RATING= " + movie.getRating());
+                }
 
-                resultStrs[i] = movie;
+                movies.add(movie);
             }
 
-            return resultStrs;
+            return movies;
         }
 
         @Override
-        protected Movie[] doInBackground(String... params) {
+        protected ArrayList<Movie> doInBackground(String... params) {
 
             //If there's no sort definition, there's nothing to loop up. Verify size of params.
             if (params.length < 2) {
@@ -354,8 +340,7 @@ public class MainActivityFragment extends Fragment {
 
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the weather data, there's no point in attemping
-                // to parse it.
+                // If the code didn't successfully get the movie data, there's no point in attemping to parse it.
                 return null;
             } finally {
                 if (urlConnection != null) {
@@ -382,13 +367,12 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected void onProgressUpdate(Void... values) {
             super.onProgressUpdate(values);
-            //mProgressBar.setProgress();
         }
 
         @Override
-        protected void onPostExecute(Movie[] s) {
-            if (s != null) {
-                mMovieList.addAll(Arrays.asList(s));
+        protected void onPostExecute(ArrayList<Movie> movies) {
+            if (movies != null && movies.isEmpty() == false) {
+                mMovieList.addAll(movies);
                 mMoviesAdapter.notifyDataSetChanged();
                 Log.v(LOG_TAG, "onPostExecute() mMovieList size: " + mMovieList.size() + " mMoviesAdapter size: " + mMoviesAdapter.getCount());
             }

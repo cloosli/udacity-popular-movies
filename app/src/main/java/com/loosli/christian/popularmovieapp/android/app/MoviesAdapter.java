@@ -22,15 +22,16 @@ public class MoviesAdapter extends BaseAdapter {
     private static final String LOG_TAG = MoviesAdapter.class.getSimpleName();
     private final Activity mContext;
     private final List<Movie> mMovies;
-    //private final int mHeight;
     private final int mWidth;
+    //    private final int mHeight;
 
     public MoviesAdapter(Activity context, List<Movie> movies) {
         mContext = context;
         mMovies = movies;
         //mHeight = Math.round(mContext.getResources().getDimension(R.dimen.poster_height));
-        // TODO set height with a ratio from width
+        // TODO: set height with a ratio from width
         mWidth = Math.round(Util.convertDpToPixel(150f, mContext));
+        //mHeight = mWidth * (278 / 185);
         Log.v(LOG_TAG, "MoviesAdapter > mWidth = " + mWidth + ", screenWidth = " + Util.getScreenWidth(mContext));
         //TODO: check connectivity speed to load lower resolution
     }
@@ -64,7 +65,7 @@ public class MoviesAdapter extends BaseAdapter {
         if (convertView == null) {
             // if it's not recycled, initialize some attributes
             imageView = new ImageView(mContext);
-            //imageView.setLayoutParams(new GridView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            //imageView.setLayoutParams(new GridView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             //imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             //imageView.setScaleType(ImageView.ScaleType.FIT_START);
             imageView.setAdjustViewBounds(true);
@@ -75,6 +76,7 @@ public class MoviesAdapter extends BaseAdapter {
 
         Picasso.with(mContext)
                 .load(Util.buildPosterUrl(movie.getPosterPath(), mWidth))
+//                .resize(mWidth, mHeight)
                 .placeholder(R.drawable.empty_photo)
                 .into(imageView);
 
