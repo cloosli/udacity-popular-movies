@@ -74,8 +74,9 @@ public class MoviesAdapter extends BaseAdapter {
             imageView = (ImageView) convertView;
         }
 
-        Picasso.with(mContext)
-                .load(Util.buildPosterUrl(movie.getPosterPath(), mWidth))
+        Picasso picasso = Picasso.with(mContext);
+        picasso.setIndicatorsEnabled(true);
+        picasso.load(Util.buildPosterUrl(movie.getPosterPath(), mWidth))
 //                .resize(mWidth, mHeight)
                 .placeholder(R.drawable.empty_photo)
                 .into(imageView);
