@@ -1,4 +1,5 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -38,7 +39,7 @@
             android:layout_marginLeft="@dimen/margin_large"
             android:layout_marginRight="@dimen/margin_large"
             android:layout_marginStart="@dimen/margin_large"
-            android:layout_marginTop="@dimen/margin_default"
+            android:layout_marginTop="@dimen/margin_large"
             android:layout_toEndOf="@id/poster"
             android:layout_toRightOf="@id/poster"
             android:ellipsize="end"
@@ -107,5 +108,45 @@
             android:lineSpacingMultiplier="@dimen/body_text_line_spacing"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             tools:text="Ethan and team take on their most impossible mission yet, eradicating the Syndicate - an International rogue organization as highly skilled as they are, committed to destroying the IMF." />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_fav"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/fab_trailer"
+            android:layout_marginRight="@dimen/margin_large"
+            android:layout_toLeftOf="@+id/fab_trailer"
+            android:layout_toStartOf="@+id/fab_trailer"
+            android:clickable="true"
+            android:src="@drawable/ic_favorite_border_white_48dp"
+            app:elevation="4dp" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_trailer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/backdrop"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="-24dp"
+            android:layout_marginRight="@dimen/margin_large"
+            android:clickable="true"
+            android:src="@drawable/ic_play_arrow_white_48dp" />
+
+        <include
+            android:id="@+id/detail_movie_videos"
+            layout="@layout/detail_movie_videos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/synopsis" />
+
+
+        <include
+            android:id="@+id/detail_movie_reviews"
+            layout="@layout/detail_movie_reviews"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/detail_movie_videos" />
+
+
     </RelativeLayout>
 </ScrollView>
