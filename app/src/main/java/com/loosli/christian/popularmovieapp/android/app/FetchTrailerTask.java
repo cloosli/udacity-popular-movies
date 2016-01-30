@@ -48,11 +48,7 @@ public class FetchTrailerTask extends AsyncTask<String, Void, Void> {
         }
         return null;
     }
-    // the movie db endpoints
-    // http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&page=2&vote_count.gte=300&api_key=01e7384a001475dbd76ab00b0aaedeca
-    // http://api.themoviedb.org/3/movie/286217/videos?api_key=01e7384a001475dbd76ab00b0aaedeca
-    // http://api.themoviedb.org/3/movie/286217/images?api_key=01e7384a001475dbd76ab00b0aaedeca
-    // http://api.themoviedb.org/3/movie/286217/reviews?api_key=01e7384a001475dbd76ab00b0aaedeca
+
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
