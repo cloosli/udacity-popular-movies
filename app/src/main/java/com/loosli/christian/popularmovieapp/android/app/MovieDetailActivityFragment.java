@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 import com.loosli.christian.popularmovieapp.android.app.util.Util;
@@ -16,10 +17,15 @@ import com.squareup.picasso.Picasso;
 import java.text.DateFormat;
 import java.util.Calendar;
 
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MovieDetailActivityFragment extends Fragment {
+
+    private long mMovieId;
 
     public MovieDetailActivityFragment() {
     }
@@ -29,6 +35,7 @@ public class MovieDetailActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.fragment_movie_detail, container, false);
+        ButterKnife.bind(this, rootView);
         // The detail Activity called via intent.  Inspect the intent for movie data.
 
         int imageWidth = getActivity().getResources().getDimensionPixelSize(R.dimen.movie_thumb_width);
@@ -42,6 +49,8 @@ public class MovieDetailActivityFragment extends Fragment {
         if (movie == null) {
             throw new IllegalStateException("no given movie!");
         }
+
+        mMovieId = movie.getId();
 
         Picasso picasso = Picasso.with(getActivity());
         ImageView poster = (ImageView) rootView.findViewById(R.id.poster);
@@ -76,8 +85,28 @@ public class MovieDetailActivityFragment extends Fragment {
         calendar.setTime(movie.getReleaseDate());
 
         ((TextView) rootView.findViewById(R.id.release_date)).setText(Integer.toString(calendar.get(Calendar.YEAR)));
-                //getString(R.string.released) + dateFormat.format(movie.getReleaseDate()));
+        //getString(R.string.released) + dateFormat.format(movie.getReleaseDate()));
+
+        updateTrailerList();
+        updateReviewList();
 
         return rootView;
+    }
+
+    @OnClick(R.id.fab_fav)
+    public void fabClicked(View view) {
+        Toast.makeText(getActivity(), "fabClicked", Toast.LENGTH_SHORT).show();
+    }
+    private void updateReviewList() {
+
+    }
+    private void updateTrailerList() {
+        FetchTrailerTask fetchTrailerTask = new FetchTrailerTask(getActivity());
+        fetchTrailerTask.execute(Long.toString(mMovieId));
+    }
+
+    @Override public void onDestroyView() {
+        super.onDestroyView();
+        ButterKnife.unbind(this);
     }
 }
