@@ -22,8 +22,7 @@ import com.loosli.christian.popularmovieapp.android.app.BuildConfig;
 public class Util {
 
     public static final Uri THEMOVIEDB_BASE_URI = Uri.parse("http://api.themoviedb.org/3/");
-//    discover/movie
-    private static final Uri TMDB_IMAGE_BASE_URI = Uri.parse("http://image.tmdb.org/t/p/");
+    public static final Uri TMDB_IMAGE_BASE_URI = Uri.parse("http://image.tmdb.org/t/p/");
 
     private interface TMDbImageWidth {
         String getWidthString();

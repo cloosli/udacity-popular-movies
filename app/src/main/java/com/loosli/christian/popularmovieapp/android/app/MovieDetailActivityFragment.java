@@ -1,34 +1,50 @@
 package com.loosli.christian.popularmovieapp.android.app;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
+import com.loosli.christian.popularmovieapp.android.app.entity.TMDBVideo;
 import com.loosli.christian.popularmovieapp.android.app.util.Util;
 import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
 import java.util.Calendar;
+import java.util.List;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MovieDetailActivityFragment extends Fragment {
+    private static final String LOGTAG = MovieDetailActivityFragment.class.getSimpleName();
 
     private long mMovieId;
 
     public MovieDetailActivityFragment() {
     }
+
+    @Bind(R.id.detail_movie_videos)
+    LinearLayout videosLayout;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -87,8 +103,10 @@ public class MovieDetailActivityFragment extends Fragment {
         ((TextView) rootView.findViewById(R.id.release_date)).setText(Integer.toString(calendar.get(Calendar.YEAR)));
         //getString(R.string.released) + dateFormat.format(movie.getReleaseDate()));
 
-        updateTrailerList();
-        updateReviewList();
+        TheMovieDBService.TMDBAPI tmdbapi = TheMovieDBService.getRetrofitBuild().create(TheMovieDBService.TMDBAPI.class);
+
+        updateTrailerList(tmdbapi);
+        updateReviewList(tmdbapi);
 
         return rootView;
     }
@@ -97,15 +115,61 @@ public class MovieDetailActivityFragment extends Fragment {
     public void fabClicked(View view) {
         Toast.makeText(getActivity(), "fabClicked", Toast.LENGTH_SHORT).show();
     }
-    private void updateReviewList() {
+
+    private TMDBVideo.TMDBItem mFirstTrailer;
+
+    @OnClick(R.id.fab_trailer)
+    public void playTrailerClicked(FloatingActionButton fab) {
+        Log.i(LOGTAG, "trailer clicked");
+        if (mFirstTrailer != null && mFirstTrailer.isYouTube()) {
+            watchYoutubeVideo(mFirstTrailer.getKey());
+        }
+    }
+
+    public void watchYoutubeVideo(String id) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + id));
+            startActivity(intent);
+        } catch (ActivityNotFoundException ex) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + id));
+            startActivity(intent);
+        }
+    }
+
+    private void updateReviewList(TheMovieDBService.TMDBAPI tmdbapi) {
+
 
     }
-    private void updateTrailerList() {
-        FetchTrailerTask fetchTrailerTask = new FetchTrailerTask(getActivity());
-        fetchTrailerTask.execute(Long.toString(mMovieId));
+
+    private void updateTrailerList(TheMovieDBService.TMDBAPI tmdbapi) {
+        Call<TMDBVideo> call = tmdbapi.listVideos(Long.toString(mMovieId));
+
+        call.enqueue(new Callback<TMDBVideo>() {
+                         @Override
+                         public void onResponse(Response<TMDBVideo> response) {
+                             try {
+                                 TMDBVideo videoResult = response.body();
+                                 List<TMDBVideo.TMDBItem> videos = videoResult.getResults();
+                                 if (mFirstTrailer == null && videos.size()> 0) {
+                                     mFirstTrailer = videos.get(0);
+                                 }
+                             } catch (NullPointerException e) {
+                                 Log.e(LOGTAG, "" + response.raw().body().toString(), e);
+                                 Toast.makeText(getActivity(), response.message() + " code: " + response.code(), Toast.LENGTH_SHORT).show();
+                             }
+                         }
+
+                         @Override
+                         public void onFailure(Throwable t) {
+                             Log.e(LOGTAG, "listVideos threw: " + t.getMessage(), t);
+                         }
+                     }
+
+        );
     }
 
-    @Override public void onDestroyView() {
+    @Override
+    public void onDestroyView() {
         super.onDestroyView();
         ButterKnife.unbind(this);
     }
