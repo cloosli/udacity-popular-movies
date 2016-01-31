@@ -16,7 +16,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
-import com.loosli.christian.popularmovieapp.android.app.entity.TMDBVideo;
+import com.loosli.christian.popularmovieapp.android.app.entity.TMDBReviews;
+import com.loosli.christian.popularmovieapp.android.app.entity.TMDBVideos;
 import com.loosli.christian.popularmovieapp.android.app.util.Util;
 import com.squareup.picasso.Picasso;
 
@@ -43,7 +44,10 @@ public class MovieDetailActivityFragment extends Fragment {
     }
 
     @Bind(R.id.detail_movie_videos)
-    LinearLayout videosLayout;
+    LinearLayout mVideosLayout;
+
+    @Bind(R.id.detail_movie_reviews)
+    LinearLayout mReviewsLayout;
 
 
     @Override
@@ -105,6 +109,9 @@ public class MovieDetailActivityFragment extends Fragment {
 
         TheMovieDBService.TMDBAPI tmdbapi = TheMovieDBService.getRetrofitBuild().create(TheMovieDBService.TMDBAPI.class);
 
+        mReviewsLayout.setVisibility(View.GONE);
+        mVideosLayout.setVisibility(View.GONE);
+
         updateTrailerList(tmdbapi);
         updateReviewList(tmdbapi);
 
@@ -116,7 +123,7 @@ public class MovieDetailActivityFragment extends Fragment {
         Toast.makeText(getActivity(), "fabClicked", Toast.LENGTH_SHORT).show();
     }
 
-    private TMDBVideo.TMDBItem mFirstTrailer;
+    private TMDBVideos.TMDBItem mFirstTrailer;
 
     @OnClick(R.id.fab_trailer)
     public void playTrailerClicked(FloatingActionButton fab) {
@@ -137,21 +144,36 @@ public class MovieDetailActivityFragment extends Fragment {
     }
 
     private void updateReviewList(TheMovieDBService.TMDBAPI tmdbapi) {
+        Call<TMDBReviews> call = tmdbapi.getReviews(Long.toString(mMovieId));
+        call.enqueue(new Callback<TMDBReviews>() {
+            @Override
+            public void onResponse(Response<TMDBReviews> response) {
+                TMDBReviews reviewResult = response.body();
+                List<TMDBReviews.Item> reviews =  reviewResult.getResults();
+                if (!reviews.isEmpty()) {
+                    mReviewsLayout.setVisibility(View.VISIBLE);
+                }
+            }
 
-
+            @Override
+            public void onFailure(Throwable t) {
+                Log.e(LOGTAG, "listVideos threw: " + t.getMessage(), t);
+            }
+        });
     }
 
     private void updateTrailerList(TheMovieDBService.TMDBAPI tmdbapi) {
-        Call<TMDBVideo> call = tmdbapi.listVideos(Long.toString(mMovieId));
+        Call<TMDBVideos> call = tmdbapi.getVideos(Long.toString(mMovieId));
 
-        call.enqueue(new Callback<TMDBVideo>() {
+        call.enqueue(new Callback<TMDBVideos>() {
                          @Override
-                         public void onResponse(Response<TMDBVideo> response) {
+                         public void onResponse(Response<TMDBVideos> response) {
                              try {
-                                 TMDBVideo videoResult = response.body();
-                                 List<TMDBVideo.TMDBItem> videos = videoResult.getResults();
+                                 TMDBVideos videoResult = response.body();
+                                 List<TMDBVideos.TMDBItem> videos = videoResult.getResults();
                                  if (mFirstTrailer == null && videos.size()> 0) {
                                      mFirstTrailer = videos.get(0);
+                                     mVideosLayout.setVisibility(View.VISIBLE);
                                  }
                              } catch (NullPointerException e) {
                                  Log.e(LOGTAG, "" + response.raw().body().toString(), e);
@@ -161,7 +183,7 @@ public class MovieDetailActivityFragment extends Fragment {
 
                          @Override
                          public void onFailure(Throwable t) {
-                             Log.e(LOGTAG, "listVideos threw: " + t.getMessage(), t);
+                             Log.e(LOGTAG, "getVideos threw: " + t.getMessage(), t);
                          }
                      }
 

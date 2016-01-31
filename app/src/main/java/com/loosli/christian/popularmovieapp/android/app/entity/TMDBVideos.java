@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Created by ChristianL on 30.01.16.
  */
-public class TMDBVideo {
+public class TMDBVideos {
 // result from tmdv
 //    {
 //        id: 286217,
