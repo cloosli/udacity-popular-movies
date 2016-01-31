@@ -86,7 +86,7 @@ public class Util {
         if (BuildConfig.DEBUG) {
             Log.d("Picasso", "Loading image of width " + tmdbImageWidth.getMaxWidth() + "px");
         }
-        String relativePath = tmdbImageWidth.getWidthString() + "/" + imagePath;
+        String relativePath = tmdbImageWidth.getWidthString() + imagePath;
         return Uri.withAppendedPath(TMDB_IMAGE_BASE_URI, relativePath).toString();
     }
 
