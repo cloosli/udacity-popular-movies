@@ -20,6 +20,7 @@ import java.util.List;
 public class MoviesAdapter extends BaseAdapter {
 
     private static final String LOG_TAG = MoviesAdapter.class.getSimpleName();
+    private static final double IMG_RATIO = 278 / 185;
     private final Activity mContext;
     private final List<Movie> mMovies;
     private final int mWidth;
@@ -73,12 +74,13 @@ public class MoviesAdapter extends BaseAdapter {
         } else {
             imageView = (ImageView) convertView;
         }
-
+        Log.d(LOG_TAG, Util.buildPosterUrl(movie.getPosterPath(), mWidth));
         Picasso picasso = Picasso.with(mContext);
         picasso.setIndicatorsEnabled(true);
         picasso.load(Util.buildPosterUrl(movie.getPosterPath(), mWidth))
-//                .resize(mWidth, mHeight)
-                .placeholder(R.drawable.empty_photo)
+                .resizeDimen(R.dimen.movie_thumb_width, R.dimen.movie_thumb_height)
+                .placeholder(R.drawable.thumbnail_placeholder)
+                .centerCrop()
                 .into(imageView);
 
         return imageView;

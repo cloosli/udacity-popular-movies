@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -35,10 +36,11 @@ import retrofit2.Response;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MovieDetailActivityFragment extends Fragment {
+public class MovieDetailActivityFragment extends Fragment implements View.OnClickListener {
     private static final String LOGTAG = MovieDetailActivityFragment.class.getSimpleName();
 
     private long mMovieId;
+    private TMDBVideos.TMDBItem mFirstTrailer;
 
     public MovieDetailActivityFragment() {
     }
@@ -49,6 +51,8 @@ public class MovieDetailActivityFragment extends Fragment {
     @Bind(R.id.detail_movie_reviews)
     LinearLayout mReviewsLayout;
 
+    @Bind(R.id.fab_trailer)
+    FloatingActionButton trailerFAB;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -109,9 +113,6 @@ public class MovieDetailActivityFragment extends Fragment {
 
         TheMovieDBService.TMDBAPI tmdbapi = TheMovieDBService.getRetrofitBuild().create(TheMovieDBService.TMDBAPI.class);
 
-        mReviewsLayout.setVisibility(View.GONE);
-        mVideosLayout.setVisibility(View.GONE);
-
         updateTrailerList(tmdbapi);
         updateReviewList(tmdbapi);
 
@@ -121,16 +122,6 @@ public class MovieDetailActivityFragment extends Fragment {
     @OnClick(R.id.fab_fav)
     public void fabClicked(View view) {
         Toast.makeText(getActivity(), "fabClicked", Toast.LENGTH_SHORT).show();
-    }
-
-    private TMDBVideos.TMDBItem mFirstTrailer;
-
-    @OnClick(R.id.fab_trailer)
-    public void playTrailerClicked(FloatingActionButton fab) {
-        Log.i(LOGTAG, "trailer clicked");
-        if (mFirstTrailer != null && mFirstTrailer.isYouTube()) {
-            watchYoutubeVideo(mFirstTrailer.getKey());
-        }
     }
 
     public void watchYoutubeVideo(String id) {
@@ -148,51 +139,102 @@ public class MovieDetailActivityFragment extends Fragment {
         call.enqueue(new Callback<TMDBReviews>() {
             @Override
             public void onResponse(Response<TMDBReviews> response) {
-                TMDBReviews reviewResult = response.body();
-                List<TMDBReviews.Item> reviews =  reviewResult.getResults();
-                if (!reviews.isEmpty()) {
-                    mReviewsLayout.setVisibility(View.VISIBLE);
+                try {
+                    TMDBReviews reviewResult = response.body();
+                    List<TMDBReviews.Item> reviews = reviewResult.getResults();
+                    addReviews(reviews);
+                } catch (NullPointerException e) {
+
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                Log.e(LOGTAG, "listVideos threw: " + t.getMessage(), t);
+                Log.e(LOGTAG, "getReviews threw: " + t.getMessage(), t);
             }
         });
     }
 
     private void updateTrailerList(TheMovieDBService.TMDBAPI tmdbapi) {
         Call<TMDBVideos> call = tmdbapi.getVideos(Long.toString(mMovieId));
-
         call.enqueue(new Callback<TMDBVideos>() {
-                         @Override
-                         public void onResponse(Response<TMDBVideos> response) {
-                             try {
-                                 TMDBVideos videoResult = response.body();
-                                 List<TMDBVideos.TMDBItem> videos = videoResult.getResults();
-                                 if (mFirstTrailer == null && videos.size()> 0) {
-                                     mFirstTrailer = videos.get(0);
-                                     mVideosLayout.setVisibility(View.VISIBLE);
-                                 }
-                             } catch (NullPointerException e) {
-                                 Log.e(LOGTAG, "" + response.raw().body().toString(), e);
-                                 Toast.makeText(getActivity(), response.message() + " code: " + response.code(), Toast.LENGTH_SHORT).show();
-                             }
-                         }
+            @Override
+            public void onResponse(Response<TMDBVideos> response) {
+                try {
+                    TMDBVideos videoResult = response.body();
+                    List<TMDBVideos.TMDBItem> videos = videoResult.getResults();
+                    addTrailers(videos);
+                } catch (NullPointerException e) {
+                    Log.e(LOGTAG, "" + response.raw().body().toString(), e);
+                    Toast.makeText(getActivity(), response.message() + " code: " + response.code(), Toast.LENGTH_SHORT).show();
+                }
+            }
 
-                         @Override
-                         public void onFailure(Throwable t) {
-                             Log.e(LOGTAG, "getVideos threw: " + t.getMessage(), t);
-                         }
-                     }
+            @Override
+            public void onFailure(Throwable t) {
+                Log.e(LOGTAG, "getVideos threw: " + t.getMessage(), t);
+            }
+        });
+    }
 
-        );
+    private void addTrailers(List<TMDBVideos.TMDBItem> trailers) {
+        mVideosLayout.removeAllViews();
+        trailerFAB.setTag(null);
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        Picasso picasso = Picasso.with(getActivity());
+        for (TMDBVideos.TMDBItem trailer : trailers) {
+            if (!trailer.isYouTube()) {
+                Log.i(LOGTAG, "no youtube trailer");
+                continue;
+            }
+            if (trailerFAB.getTag() == null) {
+                trailerFAB.setTag(trailer.getKey());
+            }
+            ViewGroup thumbContainer = (ViewGroup) inflater.inflate(R.layout.detail_movie_video, mVideosLayout, false);
+            ImageView thumbView = (ImageView) thumbContainer.findViewById(R.id.video_thumb);
+            thumbView.setTag(trailer.getKey());
+            thumbView.setOnClickListener(this);
+            picasso.load(TMDBVideos.TMDBItem.getThumbnailUrl(trailer))
+                    .resizeDimen(R.dimen.video_width, R.dimen.video_height)
+                    .centerCrop()
+                    .placeholder(R.drawable.thumbnail_placeholder)
+                    .into(thumbView);
+            mVideosLayout.addView(thumbContainer);
+        }
+    }
+
+    private void addReviews(List<TMDBReviews.Item> reviews) {
+        mReviewsLayout.removeAllViews();
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        for (TMDBReviews.Item review : reviews) {
+            ViewGroup thumbContainer = (ViewGroup) inflater.inflate(R.layout.detail_movie_review, mReviewsLayout, false);
+            ((TextView) ButterKnife.findById(thumbContainer, R.id.review_author)).setText(review.getAuthor());
+            ((TextView) ButterKnife.findById(thumbContainer, R.id.review_content)).setText(review.getContent());
+            Button button = ButterKnife.findById(thumbContainer, R.id.review_link);
+            button.setTag(review.getUrl());
+            button.setOnClickListener(this);
+            mReviewsLayout.addView(thumbContainer);
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         ButterKnife.unbind(this);
+    }
+
+    @Override
+    @OnClick(R.id.fab_trailer)
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.review_link:
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse((String) v.getTag()));
+                startActivity(intent);
+                break;
+            case R.id.fab_trailer:
+            case R.id.video_thumb:
+                watchYoutubeVideo((String) v.getTag());
+                break;
+        }
     }
 }

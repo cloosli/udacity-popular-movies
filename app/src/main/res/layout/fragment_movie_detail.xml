@@ -132,21 +132,48 @@
             android:clickable="true"
             android:src="@drawable/ic_play_arrow_white_48dp" />
 
-        <include
+        <TextView
+            android:id="@+id/movie_videos_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/synopsis"
+            android:layout_marginLeft="@dimen/margin_large"
+            android:layout_marginRight="@dimen/margin_large"
+            android:layout_marginTop="@dimen/margin_large"
+            android:text="Trailers:"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <LinearLayout
             android:id="@+id/detail_movie_videos"
-            layout="@layout/detail_movie_videos"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/synopsis" />
+            android:layout_below="@+id/movie_videos_header"
+            android:layout_margin="@dimen/margin_large"
+            android:orientation="vertical">
 
+        </LinearLayout>
 
-        <include
+        <TextView
+            android:id="@+id/movie_reviews_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/detail_movie_videos"
+            android:layout_marginLeft="@dimen/margin_large"
+            android:layout_marginRight="@dimen/margin_large"
+            android:layout_marginTop="@dimen/margin_large"
+            android:text="Reviews:"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <LinearLayout
             android:id="@+id/detail_movie_reviews"
-            layout="@layout/detail_movie_reviews"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/detail_movie_videos" />
+            android:layout_below="@+id/movie_reviews_header"
+            android:layout_margin="@dimen/margin_large"
+            android:layout_marginTop="0dp"
+            android:orientation="vertical">
 
+        </LinearLayout>
 
     </RelativeLayout>
 </ScrollView>

@@ -2,8 +2,8 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="movie_thumb_height">138dp</dimen>
-    <dimen name="movie_thumb_width">92dp</dimen>
+    <dimen name="movie_thumb_height">225dp</dimen>
+    <dimen name="movie_thumb_width">150dp</dimen>
 
     <dimen name="margin_inline">4dp</dimen>
     <dimen name="margin_default">8dp</dimen>
@@ -17,4 +17,8 @@
 
     <!-- misc dimensions -->
     <item name="body_text_line_spacing" format="float" type="dimen">1.15</item>
+
+    <!-- trailer dimensions -->
+    <dimen name="video_height">180dp</dimen>
+    <dimen name="video_width">240dp</dimen> <!-- height * aspect_ratio -->
 </resources>
