@@ -25,7 +25,7 @@ public class MovieContract {
     // looking at weather data. content://com.example.android.sunshine.app/givemeroot/ will fail,
     // as the ContentProvider hasn't been given any information on what to do with "givemeroot".
     // At least, let's hope not. Don't be that dev, reader. Don't be that dev.
-    public static final String PATH_MOVIE = "weather";
+    public static final String PATH_MOVIE = "movie";
 
     // To make it easy to query for the exact date, we normalize all dates that go into
     // the database to the start of the the Julian day at UTC.
@@ -56,7 +56,7 @@ public class MovieContract {
         // Date, stored as long in milliseconds since the epoch
         public static final String COLUMN_RELEASEDATE = "releasedate";
 
-        public static Uri buildWeatherUri(long id) {
+        public static Uri buildMovieUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
