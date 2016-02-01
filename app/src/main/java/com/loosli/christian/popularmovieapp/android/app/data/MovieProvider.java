@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 
@@ -18,11 +19,17 @@ public class MovieProvider extends ContentProvider {
     private MovieDbHelper mOpenHelper;
 
     static final int MOVIE = 100;
+    static final int MOVIE_ID = 101;
+
+    private static final SQLiteQueryBuilder sMovieByIdQueryBuilder;
+
+    static {
+        sMovieByIdQueryBuilder = new SQLiteQueryBuilder();
+        sMovieByIdQueryBuilder.setTables(MovieContract.MovieEntry.TABLE_NAME);
+    }
 
     //movie._id = ?
-    private static final String sMovieIdSelection =
-            MovieContract.MovieEntry.TABLE_NAME +
-                    "." + MovieContract.MovieEntry._ID + " = ? ";
+    private static final String sMovieIdSelection = MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID + " = ? ";
 
     /*
         This UriMatcher will match each URI to the MOVIE integer constants defined above.  You can test this by uncommenting the
@@ -40,6 +47,7 @@ public class MovieProvider extends ContentProvider {
 
         // For each type of URI you want to add, create a corresponding code.
         matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#", MOVIE_ID);
 
         return matcher;
     }
@@ -59,9 +67,24 @@ public class MovieProvider extends ContentProvider {
         switch (match) {
             case MOVIE:
                 return MovieContract.MovieEntry.CONTENT_TYPE;
+            case MOVIE_ID:
+                return MovieContract.MovieEntry.CONTENT_ITEM_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
+    }
+
+    private Cursor getMovieById(Uri uri, String[] projection, String sortOrder) {
+        String movieId = MovieContract.MovieEntry.getMovieId(uri);
+
+        return sMovieByIdQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                sMovieIdSelection,
+                new String[]{movieId},
+                null,
+                null,
+                sortOrder
+        );
     }
 
     @Nullable
@@ -71,8 +94,12 @@ public class MovieProvider extends ContentProvider {
         // and query the database accordingly.
         Cursor retCursor;
         switch (sUriMatcher.match(uri)) {
+            // "movie/#"
+            case MOVIE_ID:
+                retCursor = getMovieById(uri, projection, sortOrder);
+                break;
             // "movie"
-            case MOVIE: {
+            case MOVIE:
                 retCursor = mOpenHelper.getReadableDatabase().query(
                         MovieContract.MovieEntry.TABLE_NAME,
                         projection,
@@ -83,7 +110,6 @@ public class MovieProvider extends ContentProvider {
                         sortOrder
                 );
                 break;
-            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }

@@ -45,6 +45,12 @@ public class TestUtilities extends AndroidTestCase {
         }
     }
 
+    static void validateCursor(String error, Cursor valueCursor, ContentValues expectedValues) {
+        assertTrue("Empty cursor returned. " + error, valueCursor.moveToFirst());
+        validateCurrentRecord(error, valueCursor, expectedValues);
+        valueCursor.close();
+    }
+
     /*
     Students: The functions we provide inside of TestProvider use this utility class to test
     the ContentObserver callbacks using the PollingCheck class that we grabbed from the Android
