@@ -146,6 +146,12 @@ public class MainActivityFragment extends Fragment {
                 return true;
             }
         });
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // do nothing!
+            }
+        });
         return rootView;
     }
 
@@ -186,7 +192,7 @@ public class MainActivityFragment extends Fragment {
         if (mTotalPageNumber == 0 || page <= mTotalPageNumber) {
             FetchMoviesTask task = new FetchMoviesTask(getActivity(), mMoviesAdapter);
             task.execute(mSortCriteria.toString(), Integer.toString(page));
-            mSwipeRefreshLayout.setRefreshing(true);
+//            mSwipeRefreshLayout.setRefreshing(true);
         }
     }
 
