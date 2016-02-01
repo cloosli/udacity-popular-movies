@@ -15,7 +15,7 @@ import com.loosli.christian.popularmovieapp.android.app.BuildConfig;
 
 /**
  * Created by ChristianL on 30.11.15.
- * <p/>
+ * <p>
  * Some parts are from vickychijwani,
  * repo https://github.com/vickychijwani/udacity-p1-p2-popular-movies/blob/master/app/src/main/java/me/vickychijwani/popularmovies/util/Util.java
  */
@@ -84,7 +84,7 @@ public class Util {
 
     private static <T extends TMDbImageWidth> String buildImageUrl(String imagePath, T tmdbImageWidth) {
         if (BuildConfig.DEBUG) {
-            Log.d("Picasso", "Loading image of width " + tmdbImageWidth.getMaxWidth() + "px");
+            Log.d("Picasso", "Loading image of width " + tmdbImageWidth.getMaxWidth() + "px t: "+tmdbImageWidth);
         }
         String relativePath = tmdbImageWidth.getWidthString() + imagePath;
         return Uri.withAppendedPath(TMDB_IMAGE_BASE_URI, relativePath).toString();
@@ -159,17 +159,15 @@ public class Util {
         boolean hasConnectedMobile = false;
 
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
-        for (NetworkInfo ni : netInfo) {
-            if (ni.getTypeName().equalsIgnoreCase("WIFI")) {
-                if (ni.isConnected()) {
-                    hasConnectedWifi = true;
-                }
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+
+        if (netInfo.getTypeName().equalsIgnoreCase("WIFI")) {
+            if (netInfo.isConnected()) {
+                hasConnectedWifi = true;
             }
-            if (ni.getTypeName().equalsIgnoreCase("MOBILE")) {
-                if (ni.isConnected()) {
-                    hasConnectedMobile = true;
-                }
+        } else if (netInfo.getTypeName().equalsIgnoreCase("MOBILE")) {
+            if (netInfo.isConnected()) {
+                hasConnectedMobile = true;
             }
         }
         return hasConnectedWifi || hasConnectedMobile;

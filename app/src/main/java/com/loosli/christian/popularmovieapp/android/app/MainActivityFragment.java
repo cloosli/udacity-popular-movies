@@ -150,6 +150,8 @@ public class MainActivityFragment extends Fragment {
             @Override
             public void onRefresh() {
                 // do nothing!
+                Log.v(LOG_TAG, "onRefresh()");
+                updateMovies(1);
             }
         });
         return rootView;
@@ -187,12 +189,13 @@ public class MainActivityFragment extends Fragment {
             Log.v(LOG_TAG, "clear mMovieList, mMoviesAdapter size: " + mMoviesAdapter.getCount());
             mStartPage = 0;
             mMoviesAdapter.clearData();
-//            mMoviesAdapter.notifyDataSetChanged();
         }
         if (mTotalPageNumber == 0 || page <= mTotalPageNumber) {
+            Log.v(LOG_TAG, "create FetchMoviesTask and execute");
             FetchMoviesTask task = new FetchMoviesTask(getActivity(), mMoviesAdapter);
             task.execute(mSortCriteria.toString(), Integer.toString(page));
-//            mSwipeRefreshLayout.setRefreshing(true);
+        } else {
+            Log.v(LOG_TAG, "do not load more movies");
         }
     }
 
@@ -206,7 +209,8 @@ public class MainActivityFragment extends Fragment {
         }
     }
 
-    @Override public void onDestroyView() {
+    @Override
+    public void onDestroyView() {
         super.onDestroyView();
         ButterKnife.unbind(this);
     }

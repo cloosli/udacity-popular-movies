@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 import com.loosli.christian.popularmovieapp.android.app.util.Util;
@@ -23,6 +25,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+
+import butterknife.ButterKnife;
 
 /**
  * Created by ChristianL on 27.01.16.
@@ -208,8 +212,10 @@ public class FetchMoviesTask extends AsyncTask<String, Void, ArrayList<Movie>> {
     @Override
     protected void onPostExecute(ArrayList<Movie> movies) {
         if (movies != null && movies.isEmpty() == false) {
-//            mMovieList.addAll(movies);
             mMoviesAdapter.addAll(movies);
+            SwipeRefreshLayout swipeRefreshLayout = ButterKnife.findById((Activity) mContext, R.id.main_swipe_refresh_layout);
+            swipeRefreshLayout.setRefreshing(false);
+            Toast.makeText(mContext, "finished loading movies", Toast.LENGTH_SHORT).show();
 //            mMoviesAdapter.notifyDataSetChanged();
 //            Log.v(LOG_TAG, "onPostExecute() mMovieList size: " + mMovieList.size() + " mMoviesAdapter size: " + mMoviesAdapter.getCount());
         }

@@ -1,11 +1,17 @@
 package com.loosli.christian.popularmovieapp.android.app;
 
 import android.content.ActivityNotFoundException;
+import android.content.AsyncQueryHandler;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,13 +22,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.loosli.christian.popularmovieapp.android.app.data.MovieContract;
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
-import com.loosli.christian.popularmovieapp.android.app.entity.TMDBReviews;
-import com.loosli.christian.popularmovieapp.android.app.entity.TMDBVideos;
+import com.loosli.christian.popularmovieapp.android.app.entity.Review;
+import com.loosli.christian.popularmovieapp.android.app.entity.Video;
 import com.loosli.christian.popularmovieapp.android.app.util.Util;
 import com.squareup.picasso.Picasso;
 
-import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -36,14 +43,23 @@ import retrofit2.Response;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MovieDetailActivityFragment extends Fragment implements View.OnClickListener {
+public class MovieDetailActivityFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
     private static final String LOGTAG = MovieDetailActivityFragment.class.getSimpleName();
 
-    private long mMovieId;
-    private TMDBVideos.TMDBItem mFirstTrailer;
+    public static final String ARG_MOVIE = "arg_movie";
+    private static final String STATE_REVIEWS = "state_reviews";
+    private static final String STATE_VIDEOS = "state_trailers";
+    private static final int DETAIL_LOADER = 0;
 
-    public MovieDetailActivityFragment() {
-    }
+    private static final String[] DETAIL_COLUMNS = {
+            MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
+    };
+    static final int COL_MOVIE_ID = 0;
+
+    private Movie mMovie;
+    private List<Video> mVideos;
+    private List<Review> mReviews;
+    private Video mFirstTrailer;
 
     @Bind(R.id.detail_movie_videos)
     LinearLayout mVideosLayout;
@@ -52,76 +68,144 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
     LinearLayout mReviewsLayout;
 
     @Bind(R.id.fab_trailer)
-    FloatingActionButton trailerFAB;
+    FloatingActionButton mTrailerFAB;
+
+    @Bind(R.id.fab_fav)
+    FloatingActionButton mFavFAB;
+
+    @Bind(R.id.poster)
+    ImageView mPoster;
+
+    @Bind(R.id.backdrop)
+    ImageView mBackdrop;
+
+    public MovieDetailActivityFragment() {
+    }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.i(LOGTAG, "onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_movie_detail, container, false);
         ButterKnife.bind(this, rootView);
         // The detail Activity called via intent.  Inspect the intent for movie data.
-
-        int imageWidth = getActivity().getResources().getDimensionPixelSize(R.dimen.movie_thumb_width);
-        int imageHeight = getActivity().getResources().getDimensionPixelSize(R.dimen.movie_thumb_height);
-
-        Movie movie = null;
         Intent intent = getActivity().getIntent();
         if (intent != null && intent.hasExtra(BundleKeys.MOVIE)) {
-            movie = intent.getParcelableExtra(BundleKeys.MOVIE);
+            mMovie = intent.getParcelableExtra(BundleKeys.MOVIE);
         }
-        if (movie == null) {
+        if (mMovie == null) {
             throw new IllegalStateException("no given movie!");
         }
 
-        mMovieId = movie.getId();
-
-        Picasso picasso = Picasso.with(getActivity());
-        ImageView poster = (ImageView) rootView.findViewById(R.id.poster);
-        ImageView backdrop = (ImageView) rootView.findViewById(R.id.backdrop);
+        if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey(STATE_VIDEOS)) {
+                mVideos = savedInstanceState.getParcelableArrayList(STATE_VIDEOS);
+            }
+            if (savedInstanceState.containsKey(STATE_REVIEWS)) {
+                mReviews = savedInstanceState.getParcelableArrayList(STATE_REVIEWS);
+            }
+        }
 
         int posterWidth = getResources().getDimensionPixelSize(R.dimen.details_poster_width);
         int posterHeight = getResources().getDimensionPixelSize(R.dimen.details_poster_height);
-        picasso.load(Util.buildPosterUrl(movie.getPosterPath(), posterWidth))
+
+        Picasso picasso = Picasso.with(getActivity());
+        picasso.load(Util.buildPosterUrl(mMovie.getPosterPath(), posterWidth))
                 .resize(posterWidth, posterHeight)
                 .centerCrop()
+//                .centerInside()
                 .noPlaceholder()
-                .into(poster);
+                .into(mPoster);
 
         int backdropWidth = Util.getScreenWidth(getActivity());
         int backdropHeight = getResources().getDimensionPixelSize(R.dimen.details_backdrop_height);
-        picasso.load(Util.buildBackdropUrl(movie.getBackdropPath(), backdropWidth))
+        Log.d(LOGTAG, "getBackdropUrl for dimension: w" + backdropWidth + " * h" + backdropHeight);
+        picasso.load(Util.buildBackdropUrl(mMovie.getBackdropPath(), backdropWidth))
                 .resize(backdropWidth, backdropHeight)
                 .centerCrop()
                 .noPlaceholder()
-                .into(backdrop);
+                .into(mBackdrop);
 
-        getActivity().setTitle(movie.getTitle());
+        getActivity().setTitle(mMovie.getTitle());
 
-        ((TextView) rootView.findViewById(R.id.title)).setText(movie.getTitle());
-        ((TextView) rootView.findViewById(R.id.synopsis)).setText(movie.getOverview());
+        ((TextView) rootView.findViewById(R.id.title)).setText(mMovie.getTitle());
+        ((TextView) rootView.findViewById(R.id.synopsis)).setText(mMovie.getOverview());
 
-        String voteAverage = String.format("%1$2.1f", movie.getRating());
+        String voteAverage = String.format("%1$2.1f", mMovie.getRating());
 
         ((TextView) rootView.findViewById(R.id.rating)).setText(voteAverage);
-        DateFormat dateFormat = android.text.format.DateFormat.getDateFormat(getActivity());
+//        DateFormat dateFormat = android.text.format.DateFormat.getDateFormat(getActivity());
+//        getString(R.string.released) + dateFormat.format(mMovie.getReleaseDate()));
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(movie.getReleaseDate());
-
+        calendar.setTime(mMovie.getReleaseDate());
         ((TextView) rootView.findViewById(R.id.release_date)).setText(Integer.toString(calendar.get(Calendar.YEAR)));
-        //getString(R.string.released) + dateFormat.format(movie.getReleaseDate()));
 
-        TheMovieDBService.TMDBAPI tmdbapi = TheMovieDBService.getRetrofitBuild().create(TheMovieDBService.TMDBAPI.class);
-
-        updateTrailerList(tmdbapi);
-        updateReviewList(tmdbapi);
-
+        mFavFAB.setVisibility(View.INVISIBLE);
         return rootView;
     }
 
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        Log.i(LOGTAG, "onActivityCreated");
+        getLoaderManager().initLoader(DETAIL_LOADER, null, this);
+//        onMovieLoaded(getArguments().getParcelable(ARG_MOVIE));
+//        if (mReviews != null) onReviewsLoaded(mReviews);
+//        else loadReviews();
+//        if (mVideos != null) onVideosLoaded(mVideos);
+//        else loadVideos();
+        TheMovieDBService.TMDBAPI tmdbapi = TheMovieDBService.getRetrofitBuild().create(TheMovieDBService.TMDBAPI.class);
+        boolean connected = true; //Util.hasNetworkConnection(getActivity());
+        if (mVideos == null && connected) {
+            updateTrailerList(tmdbapi);
+        }
+        if (mReviews == null && connected) {
+            updateReviewList(tmdbapi);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.i(LOGTAG, "onSaveInstanceState");
+        // When tablets rotate, the currently selected list item needs to be saved.
+        if (mReviews != null) {
+            outState.putParcelableArrayList(STATE_REVIEWS, new ArrayList<Parcelable>(mReviews));
+        }
+        if (mVideos != null) {
+            outState.putParcelableArrayList(STATE_VIDEOS, new ArrayList<Parcelable>(mVideos));
+        }
+    }
+
     @OnClick(R.id.fab_fav)
-    public void fabClicked(View view) {
-        Toast.makeText(getActivity(), "fabClicked", Toast.LENGTH_SHORT).show();
+    public void fabClicked(FloatingActionButton fab) {
+        mFavFAB.setEnabled(false);
+        AsyncQueryHandler handler = new AsyncQueryHandler(getActivity().getContentResolver()) {
+            @Override
+            protected void onDeleteComplete(int token, Object cookie, int result) {
+                super.onDeleteComplete(token, cookie, result);
+                mFavFAB.setEnabled(true);
+                Toast.makeText(getActivity(), "Delete complete", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            protected void onInsertComplete(int token, Object cookie, Uri uri) {
+                super.onInsertComplete(token, cookie, uri);
+                mFavFAB.setEnabled(true);
+                Toast.makeText(getActivity(), "Insert complete", Toast.LENGTH_SHORT).show();
+            }
+        };
+        if (mMovie.isFavored()) {
+            Toast.makeText(getActivity(), "delete movie", Toast.LENGTH_SHORT).show();
+            mMovie.setFavored(false);
+            String where = MovieContract.MovieEntry._ID + "=?";
+            String[] args = new String[]{String.valueOf(mMovie.getId())};
+            handler.startDelete(-1, null, MovieContract.MovieEntry.CONTENT_URI, where, args);
+        } else {
+            Toast.makeText(getActivity(), "insert movie", Toast.LENGTH_SHORT).show();
+            mMovie.setFavored(true);
+            fab.setImageResource(R.drawable.ic_favorite_white_48dp);
+            handler.startInsert(-1, null, MovieContract.MovieEntry.CONTENT_URI, new Movie.Builder().movie(mMovie).build());
+        }
     }
 
     public void watchYoutubeVideo(String id) {
@@ -135,16 +219,16 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
     }
 
     private void updateReviewList(TheMovieDBService.TMDBAPI tmdbapi) {
-        Call<TMDBReviews> call = tmdbapi.getReviews(Long.toString(mMovieId));
-        call.enqueue(new Callback<TMDBReviews>() {
+        Call<Review.Response> call = tmdbapi.getReviews(Long.toString(mMovie.getId()));
+        call.enqueue(new Callback<Review.Response>() {
             @Override
-            public void onResponse(Response<TMDBReviews> response) {
+            public void onResponse(Response<Review.Response> response) {
                 try {
-                    TMDBReviews reviewResult = response.body();
-                    List<TMDBReviews.Item> reviews = reviewResult.getResults();
+                    Review.Response reviewResult = response.body();
+                    List<Review> reviews = reviewResult.reviews;
                     addReviews(reviews);
                 } catch (NullPointerException e) {
-
+                    Log.e(LOGTAG, "NullPointerException: " + response.raw().body().toString(), e);
                 }
             }
 
@@ -156,16 +240,16 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
     }
 
     private void updateTrailerList(TheMovieDBService.TMDBAPI tmdbapi) {
-        Call<TMDBVideos> call = tmdbapi.getVideos(Long.toString(mMovieId));
-        call.enqueue(new Callback<TMDBVideos>() {
+        Call<Video.Response> call = tmdbapi.getVideos(Long.toString(mMovie.getId()));
+        call.enqueue(new Callback<Video.Response>() {
             @Override
-            public void onResponse(Response<TMDBVideos> response) {
+            public void onResponse(Response<Video.Response> response) {
                 try {
-                    TMDBVideos videoResult = response.body();
-                    List<TMDBVideos.TMDBItem> videos = videoResult.getResults();
+                    Video.Response videoResult = response.body();
+                    List<Video> videos = videoResult.videos;
                     addTrailers(videos);
                 } catch (NullPointerException e) {
-                    Log.e(LOGTAG, "" + response.raw().body().toString(), e);
+                    Log.e(LOGTAG, "NullPointerException: " + response.raw().body().toString(), e);
                     Toast.makeText(getActivity(), response.message() + " code: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
@@ -177,24 +261,24 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
         });
     }
 
-    private void addTrailers(List<TMDBVideos.TMDBItem> trailers) {
+    private void addTrailers(List<Video> trailers) {
         mVideosLayout.removeAllViews();
-        trailerFAB.setTag(null);
+        mTrailerFAB.setTag(null);
         LayoutInflater inflater = getActivity().getLayoutInflater();
         Picasso picasso = Picasso.with(getActivity());
-        for (TMDBVideos.TMDBItem trailer : trailers) {
+        for (Video trailer : trailers) {
             if (!trailer.isYouTube()) {
                 Log.i(LOGTAG, "no youtube trailer");
                 continue;
             }
-            if (trailerFAB.getTag() == null) {
-                trailerFAB.setTag(trailer.getKey());
+            if (mTrailerFAB.getTag() == null) {
+                mTrailerFAB.setTag(trailer.getKey());
             }
             ViewGroup thumbContainer = (ViewGroup) inflater.inflate(R.layout.detail_movie_video, mVideosLayout, false);
             ImageView thumbView = (ImageView) thumbContainer.findViewById(R.id.video_thumb);
             thumbView.setTag(trailer.getKey());
             thumbView.setOnClickListener(this);
-            picasso.load(TMDBVideos.TMDBItem.getThumbnailUrl(trailer))
+            picasso.load(Video.getThumbnailUrl(trailer))
                     .resizeDimen(R.dimen.video_width, R.dimen.video_height)
                     .centerCrop()
                     .placeholder(R.drawable.thumbnail_placeholder)
@@ -203,10 +287,10 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
         }
     }
 
-    private void addReviews(List<TMDBReviews.Item> reviews) {
+    private void addReviews(List<Review> reviews) {
         mReviewsLayout.removeAllViews();
         LayoutInflater inflater = getActivity().getLayoutInflater();
-        for (TMDBReviews.Item review : reviews) {
+        for (Review review : reviews) {
             ViewGroup thumbContainer = (ViewGroup) inflater.inflate(R.layout.detail_movie_review, mReviewsLayout, false);
             ((TextView) ButterKnife.findById(thumbContainer, R.id.review_author)).setText(review.getAuthor());
             ((TextView) ButterKnife.findById(thumbContainer, R.id.review_content)).setText(review.getContent());
@@ -236,5 +320,40 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
                 watchYoutubeVideo((String) v.getTag());
                 break;
         }
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Log.v(LOGTAG, "In onCreateLoader");
+        // Now create and return a CursorLoader that will take care of
+        // creating a Cursor for the data being displayed.
+        if (!mMovie.isFavored()) {
+            return new CursorLoader(
+                    getActivity(),
+                    MovieContract.MovieEntry.buildMovieUri(mMovie.getId()),
+                    DETAIL_COLUMNS,
+                    null,
+                    null,
+                    null
+            );
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if (data != null && data.moveToFirst()) {
+            mMovie.setFavored(true);
+            mFavFAB.setImageResource(R.drawable.ic_favorite_white_48dp);
+            Toast.makeText(getActivity(), "found movie in db id: " + data.getString(COL_MOVIE_ID), Toast.LENGTH_SHORT).show();
+        } else {
+            mFavFAB.setImageResource(R.drawable.ic_favorite_border_white_48dp);
+            Toast.makeText(getActivity(), "no movie found in db", Toast.LENGTH_SHORT).show();
+        }
+        mFavFAB.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
     }
 }

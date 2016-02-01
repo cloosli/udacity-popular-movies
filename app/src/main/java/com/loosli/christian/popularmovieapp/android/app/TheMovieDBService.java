@@ -1,7 +1,7 @@
 package com.loosli.christian.popularmovieapp.android.app;
 
-import com.loosli.christian.popularmovieapp.android.app.entity.TMDBReviews;
-import com.loosli.christian.popularmovieapp.android.app.entity.TMDBVideos;
+import com.loosli.christian.popularmovieapp.android.app.entity.Review;
+import com.loosli.christian.popularmovieapp.android.app.entity.Video;
 import com.loosli.christian.popularmovieapp.android.app.util.Util;
 
 import retrofit2.Call;
@@ -27,9 +27,9 @@ public final class TheMovieDBService {
 
     public interface TMDBAPI {
         @GET("movie/{movieId}/videos?" + APPAPI_KEY)
-        Call<TMDBVideos> getVideos(@Path("movieId") String movieId);
+        Call<Video.Response> getVideos(@Path("movieId") String movieId);
 
         @GET("movie/{movieId}/reviews?" + APPAPI_KEY)
-        Call<TMDBReviews> getReviews(@Path("movieId") String movieId);
+        Call<Review.Response> getReviews(@Path("movieId") String movieId);
     }
 }

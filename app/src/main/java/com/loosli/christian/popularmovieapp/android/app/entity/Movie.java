@@ -8,7 +8,7 @@ import java.util.Date;
 /**
  * Created by ChristianL on 29.11.15.
  */
-public class Movie implements Parcelable {
+public final class Movie implements MovieMeta, Parcelable {
 
     private long id;
     private String title;
@@ -17,6 +17,7 @@ public class Movie implements Parcelable {
     private String backdropPath;
     private float rating;
     private Date releaseDate;
+    private boolean favored = false;
 
     public long getId() {
         return id;
@@ -74,6 +75,14 @@ public class Movie implements Parcelable {
         this.releaseDate = releaseDate;
     }
 
+    public boolean isFavored() {
+        return favored;
+    }
+
+    public void setFavored(boolean favored) {
+        this.favored = favored;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -111,6 +120,7 @@ public class Movie implements Parcelable {
             return new Movie[size];
         }
     };
+
 }
 
 
