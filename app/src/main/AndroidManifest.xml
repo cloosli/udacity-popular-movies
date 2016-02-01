@@ -29,6 +29,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.loosli.christian.popularmovieapp.android.app.MainActivity" />
         </activity>
+
+        <provider
+            android:name=".data.MovieProvider"
+            android:authorities="com.loosli.christian.popularmovieapp.android.app"
+            android:exported="false"
+            android:syncable="true" />
     </application>
 
 </manifest>
