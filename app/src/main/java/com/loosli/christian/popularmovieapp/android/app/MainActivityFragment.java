@@ -13,13 +13,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.Toast;
 
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -37,7 +41,7 @@ public class MainActivityFragment extends Fragment {
     @Bind(R.id.main_swipe_refresh_layout)
     SwipeRefreshLayout mSwipeRefreshLayout;
 
-    private int mTotalPageNumber = 1000;
+    private int mTotalPages = 1000;
     private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
     private int mStartPage = 0;
 
@@ -151,7 +155,8 @@ public class MainActivityFragment extends Fragment {
             public void onRefresh() {
                 // do nothing!
                 Log.v(LOG_TAG, "onRefresh()");
-                updateMovies(1);
+//                updateMovies(1);
+                mSwipeRefreshLayout.setRefreshing(false);
             }
         });
         return rootView;
@@ -184,16 +189,35 @@ public class MainActivityFragment extends Fragment {
     }
 
     private void updateMovies(int page) {
-        Log.v(LOG_TAG, "updateMovies(" + page + ") > fetsch more mTotalPageNumber: " + mTotalPageNumber);
+        Log.v(LOG_TAG, "updateMovies(" + page + ") > fetsch more mTotalPages: " + mTotalPages);
         if (page <= 1 && mMovieList.isEmpty() == false) {
             Log.v(LOG_TAG, "clear mMovieList, mMoviesAdapter size: " + mMoviesAdapter.getCount());
             mStartPage = 0;
             mMoviesAdapter.clearData();
         }
-        if (mTotalPageNumber == 0 || page <= mTotalPageNumber) {
-            Log.v(LOG_TAG, "create FetchMoviesTask and execute");
-            FetchMoviesTask task = new FetchMoviesTask(getActivity(), mMoviesAdapter);
-            task.execute(mSortCriteria.toString(), Integer.toString(page));
+        if (mTotalPages == 0 || page <= mTotalPages) {
+            Log.v(LOG_TAG, "create TheMovieDBService and enqueue");
+            TheMovieDBService.TMDBAPI tmdbapi = TheMovieDBService.getRetrofitBuild().create(TheMovieDBService.TMDBAPI.class);
+            tmdbapi.getMovies(mSortCriteria.toString(), page, 300).enqueue(new Callback<Movie.Response>(){
+                @Override
+                public void onResponse(Response<Movie.Response> response) {
+                    Movie.Response moviesResponse = response.body();
+                    List<Movie> movies = moviesResponse.movies;
+                    mTotalPages = moviesResponse.total_pages;
+                    mMoviesAdapter.addAll(movies);
+                    mSwipeRefreshLayout.setRefreshing(false);
+                    Toast.makeText(getActivity(), "finished loading page " + moviesResponse.page,Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    Toast.makeText(getActivity(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e(LOG_TAG, t.getMessage(), t);
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }
+            });
+
+
         } else {
             Log.v(LOG_TAG, "do not load more movies");
         }

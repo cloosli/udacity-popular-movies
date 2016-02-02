@@ -3,7 +3,10 @@ package com.loosli.christian.popularmovieapp.android.app.entity;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by ChristianL on 29.11.15.
@@ -13,10 +16,20 @@ public final class Movie implements MovieMeta, Parcelable {
     private long id;
     private String title;
     private String overview;
+
+    @SerializedName("poster_path")
     private String posterPath;
+    @SerializedName("backdrop_path")
     private String backdropPath;
+    @SerializedName("vote_average")
     private float rating;
+    @SerializedName("release_date")
     private Date releaseDate;
+    @SerializedName("original_language")
+    private String originalLanguage;
+
+    private boolean adult;
+
     private boolean favored = false;
 
     public long getId() {
@@ -83,6 +96,22 @@ public final class Movie implements MovieMeta, Parcelable {
         this.favored = favored;
     }
 
+    public String getOriginalLanguage() {
+        return originalLanguage;
+    }
+
+    public void setOriginalLanguage(String originalLanguage) {
+        this.originalLanguage = originalLanguage;
+    }
+
+    public boolean isAdult() {
+        return adult;
+    }
+
+    public void setAdult(boolean adult) {
+        this.adult = adult;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -97,6 +126,8 @@ public final class Movie implements MovieMeta, Parcelable {
         dest.writeString(backdropPath);
         dest.writeFloat(rating);
         dest.writeLong(releaseDate.getTime());
+        dest.writeInt(adult ? 1 : 0);
+        dest.writeString(originalLanguage);
     }
 
     public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
@@ -112,6 +143,8 @@ public final class Movie implements MovieMeta, Parcelable {
             Date releaseDate = new Date();
             releaseDate.setTime(source.readLong());
             movie.setReleaseDate(releaseDate);
+            movie.setAdult(source.readInt() == 1 ? true : false);
+            movie.setOriginalLanguage(source.readString());
             return movie;
         }
 
@@ -121,6 +154,14 @@ public final class Movie implements MovieMeta, Parcelable {
         }
     };
 
+    public static final class Response {
+        public int page;
+        public int total_results;
+        public int total_pages;
+
+        @SerializedName("results")
+        public List<Movie> movies;
+    }
 }
 
 
