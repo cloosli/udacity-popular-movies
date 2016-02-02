@@ -14,6 +14,9 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -59,7 +62,8 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
     private Movie mMovie;
     private List<Video> mVideos;
     private List<Review> mReviews;
-    private Video mFirstTrailer;
+
+    private MenuItem mMenuItemShare;
 
     @Bind(R.id.detail_movie_videos)
     LinearLayout mVideosLayout;
@@ -80,6 +84,7 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
     ImageView mBackdrop;
 
     public MovieDetailActivityFragment() {
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -141,6 +146,43 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
 
         mFavFAB.setVisibility(View.INVISIBLE);
         return rootView;
+    }
+
+//    @Override
+//    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        inflater.inflate(R.menu.fragmen_movie_detail, menu);
+//
+//        // Retrieve the share menu item
+//        MenuItem menuItem = menu.findItem(R.id.action_share);
+//
+//        // Get the provider and hold onto it to set/change the share intent.
+//        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+//
+//        // If onLoadFinished happens before this, we can go ahead and set the share intent now.
+//        if (mTrailerFAB.getTag() != null) {
+//            mShareActionProvider.setShareIntent(createShareTrailerIntent());
+//        }
+//    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.fragmen_movie_detail, menu);
+        mMenuItemShare = menu.findItem(R.id.action_share);
+//        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(mMenuItemShare);
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_share) {
+            if (mTrailerFAB.getTag() != null) {
+                getActivity().startActivity(Intent.createChooser(createShareTrailerIntent(), getResources().getString(R.string.title_share_trailer)));
+//                mShareActionProvider.setShareIntent(createShareTrailerIntent());
+            }
+        }
+
+        return true;
     }
 
     @Override
@@ -272,7 +314,10 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
                 continue;
             }
             if (mTrailerFAB.getTag() == null) {
-                mTrailerFAB.setTag(trailer.getKey());
+                mTrailerFAB.setTag(trailer);
+                // update the share intent
+                mMenuItemShare.setVisible(true);
+//                mShareActionProvider.setShareIntent(createShareTrailerIntent());
             }
             ViewGroup thumbContainer = (ViewGroup) inflater.inflate(R.layout.detail_movie_video, mVideosLayout, false);
             ImageView thumbView = (ImageView) thumbContainer.findViewById(R.id.video_thumb);
@@ -317,7 +362,7 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
                 break;
             case R.id.fab_trailer:
             case R.id.video_thumb:
-                watchYoutubeVideo((String) v.getTag());
+                watchYoutubeVideo(((Video) v.getTag()).getKey());
                 break;
         }
     }
@@ -355,5 +400,15 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
+    }
+
+    private Intent createShareTrailerIntent() {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        shareIntent.setType("text/plain");
+        Video trailer = (Video) mTrailerFAB.getTag();
+        String text = getResources().getString(R.string.share_template, trailer.getName(), " http://www.youtube.com/watch?v=" + trailer.getKey());
+        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+        return shareIntent;
     }
 }
