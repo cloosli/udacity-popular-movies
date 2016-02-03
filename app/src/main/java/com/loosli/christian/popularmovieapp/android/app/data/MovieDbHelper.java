@@ -12,7 +12,7 @@ import com.loosli.christian.popularmovieapp.android.app.data.MovieContract.Movie
 public class MovieDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     static final String DATABASE_NAME = "movie.db";
 
