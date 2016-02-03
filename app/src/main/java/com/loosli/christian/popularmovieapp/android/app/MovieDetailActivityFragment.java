@@ -190,13 +190,8 @@ public class MovieDetailActivityFragment extends Fragment implements View.OnClic
         super.onActivityCreated(savedInstanceState);
         Log.i(LOGTAG, "onActivityCreated");
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
-//        onMovieLoaded(getArguments().getParcelable(ARG_MOVIE));
-//        if (mReviews != null) onReviewsLoaded(mReviews);
-//        else loadReviews();
-//        if (mVideos != null) onVideosLoaded(mVideos);
-//        else loadVideos();
         TheMovieDBService.TMDBAPI tmdbapi = TheMovieDBService.getRetrofitBuild().create(TheMovieDBService.TMDBAPI.class);
-        boolean connected = true; //Util.hasNetworkConnection(getActivity());
+        boolean connected = true; //Util.hasNetworkConnection(getActivity()); // needs permission
         if (mVideos == null && connected) {
             updateTrailerList(tmdbapi);
         }

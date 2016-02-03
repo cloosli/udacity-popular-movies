@@ -49,12 +49,16 @@ public class MainActivityFragment extends Fragment {
     public void setSortCriteria(SortCriteria criteria) {
         if (mSortCriteria != criteria) {
             mSortCriteria = criteria;
-            updateMovies(1);
+            if (mSortCriteria == SortCriteria.FAVORITES) {
+//                getCon
+            } else {
+                updateMovies(1);
+            }
         }
     }
 
     public enum SortCriteria {
-        POPULARITY("popularity.desc"), RATING("vote_average.desc");
+        POPULARITY("popularity.desc"), RATING("vote_average.desc"), FAVORITES("");
         public final String name;
 
         SortCriteria(String name) {
@@ -93,26 +97,24 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.movies_fragment, menu);
-//        if (mSortCriteria == SortCriteria.POPULARITY) {
-//            MenuItem item = menu.findItem(R.id.action_sort_popularity);
-//            item.setEnabled(false);
-//        } else {
-//            MenuItem item = menu.findItem(R.id.action_sort_rating);
-//            item.setEnabled(false);
-//        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        final int id = item.getItemId();
+        switch (item.getItemId()) {
+            case R.id.action_sort_favorites:
+                item.setChecked(true);
+                setSortCriteria(SortCriteria.FAVORITES);
+                return true;
+            case R.id.action_sort_popularity:
+                item.setChecked(true);
+                setSortCriteria(SortCriteria.POPULARITY);
+                return true;
 
-        if (id == R.id.action_sort_popularity) {
-            setSortCriteria(SortCriteria.POPULARITY);
-            return true;
-        }
-        if (id == R.id.action_sort_rating) {
-            setSortCriteria(SortCriteria.RATING);
-            return true;
+            case R.id.action_sort_rating:
+                item.setChecked(true);
+                setSortCriteria(SortCriteria.RATING);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -138,6 +140,7 @@ public class MainActivityFragment extends Fragment {
                 Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
                 intent.putExtra(BundleKeys.MOVIE, movie);
                 getActivity().startActivity(intent);
+//                getActivity().startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle());
             }
         });
         int visibleThreshold = 5;
@@ -198,7 +201,7 @@ public class MainActivityFragment extends Fragment {
         if (mTotalPages == 0 || page <= mTotalPages) {
             Log.v(LOG_TAG, "create TheMovieDBService and enqueue");
             TheMovieDBService.TMDBAPI tmdbapi = TheMovieDBService.getRetrofitBuild().create(TheMovieDBService.TMDBAPI.class);
-            tmdbapi.getMovies(mSortCriteria.toString(), page, 300).enqueue(new Callback<Movie.Response>(){
+            tmdbapi.getMovies(mSortCriteria.toString(), page, 300).enqueue(new Callback<Movie.Response>() {
                 @Override
                 public void onResponse(Response<Movie.Response> response) {
                     Movie.Response moviesResponse = response.body();
@@ -206,7 +209,7 @@ public class MainActivityFragment extends Fragment {
                     mTotalPages = moviesResponse.total_pages;
                     mMoviesAdapter.addAll(movies);
                     mSwipeRefreshLayout.setRefreshing(false);
-                    Toast.makeText(getActivity(), "finished loading page " + moviesResponse.page,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "finished loading page " + moviesResponse.page, Toast.LENGTH_SHORT).show();
                 }
 
                 @Override

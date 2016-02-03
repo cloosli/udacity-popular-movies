@@ -7,13 +7,18 @@
         android:title="@string/action_sort"
         app:showAsAction="ifRoom">
         <menu>
-            <item
-                android:id="@+id/action_sort_popularity"
-                android:checked="true"
-                android:title="@string/sort_popularity" />
-            <item
-                android:id="@+id/action_sort_rating"
-                android:title="@string/sort_rating" />
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/action_sort_favorites"
+                    android:title="@string/sort_favored" />
+                <item
+                    android:id="@+id/action_sort_popularity"
+                    android:checked="true"
+                    android:title="@string/sort_popularity" />
+                <item
+                    android:id="@+id/action_sort_rating"
+                    android:title="@string/sort_rating" />
+            </group>
         </menu>
     </item>
 </menu>

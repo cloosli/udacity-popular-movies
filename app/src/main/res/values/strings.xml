@@ -7,6 +7,7 @@
     <!-- Content descriptions for accessibility -->
     <string name="content_desc_movie_poster">Movie poster</string>
     <string name="content_desc_backdrop_image">Movie backdrop image</string>
+    <string name="sort_favored">Favorites</string>
     <string name="sort_popularity">Sort by Most Popular</string>
     <string name="sort_rating">Sort by Highest Rated</string>
     <string name="content_desc_video_thumbnail">Video thumbnail</string>
