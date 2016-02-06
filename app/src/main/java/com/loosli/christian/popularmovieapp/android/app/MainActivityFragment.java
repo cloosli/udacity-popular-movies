@@ -266,17 +266,19 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         if (page <= 1 && mMovieList.isEmpty() == false) {
             Log.v(LOG_TAG, "clear mMovieList, mMoviesAdapter size: " + mAdapter.getItemCount());
             mStartPage = 0;
-//            mAdapter.clearData();
-//            mMoviesAdapter.clearData();
             mMovieList.clear();
             mAdapter.notifyDataSetChanged();
         }
+
         if (mSortCriteria == SortCriteria.FAVORITES) {
             getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
             return;
         }
         if (mTotalPages == 0 || page <= mTotalPages) {
             Log.v(LOG_TAG, "create TheMovieDBService and enqueue");
+            if (mSwipeRefreshLayout != null && !mSwipeRefreshLayout.isRefreshing()) {
+                mSwipeRefreshLayout.setRefreshing(true);  // This show the spinner on top of activity
+            }
             TheMovieDBService.TMDBAPI tmdbapi = TheMovieDBService.getRetrofitBuild().create(TheMovieDBService.TMDBAPI.class);
             Call<Movie.Response> call = tmdbapi.getMovies(mSortCriteria.toString(), page, 300);
             call.enqueue(new Callback<Movie.Response>() {
@@ -320,9 +322,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     */
     @Override
     public Loader<Cursor> onCreateLoader(int loaderID, Bundle bundle) {
-    /*
-     * Takes action based on the ID of the Loader that's being created
-     */
+        if (mSwipeRefreshLayout != null && !mSwipeRefreshLayout.isRefreshing()) {
+            mSwipeRefreshLayout.setRefreshing(true);  // This show the spinner on top of activity
+        }
+        /*
+        * Takes action based on the ID of the Loader that's being created
+        */
         switch (loaderID) {
             case MOVIE_LOADER:
                 // Returns a new CursorLoader
