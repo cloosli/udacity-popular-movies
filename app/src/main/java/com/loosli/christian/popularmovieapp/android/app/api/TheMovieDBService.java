@@ -1,6 +1,7 @@
-package com.loosli.christian.popularmovieapp.android.app;
+package com.loosli.christian.popularmovieapp.android.app.api;
 
 import com.google.gson.GsonBuilder;
+import com.loosli.christian.popularmovieapp.android.app.BuildConfig;
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 import com.loosli.christian.popularmovieapp.android.app.entity.Review;
 import com.loosli.christian.popularmovieapp.android.app.entity.Video;

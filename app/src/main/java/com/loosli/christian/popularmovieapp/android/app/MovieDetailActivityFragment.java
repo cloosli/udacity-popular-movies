@@ -25,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.loosli.christian.popularmovieapp.android.app.api.TheMovieDBService;
 import com.loosli.christian.popularmovieapp.android.app.data.MovieContract;
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 import com.loosli.christian.popularmovieapp.android.app.entity.Review;

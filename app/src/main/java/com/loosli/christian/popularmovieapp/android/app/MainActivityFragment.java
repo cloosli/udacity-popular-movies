@@ -22,6 +22,7 @@ import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
 import com.loosli.christian.popularmovieapp.android.app.adapter.MovieAdapter;
+import com.loosli.christian.popularmovieapp.android.app.api.TheMovieDBService;
 import com.loosli.christian.popularmovieapp.android.app.data.MovieContract;
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 
