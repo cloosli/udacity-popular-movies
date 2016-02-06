@@ -1,12 +1,17 @@
 package com.loosli.christian.popularmovieapp.android.app;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
-public class MainActivity extends AppCompatActivity {
+import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
+
+public class MainActivity extends AppCompatActivity implements MovieAdapter.OnMovieClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,5 +41,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onMovieClicked(@NonNull Movie movie, View view) {
+        Intent intent = new Intent(this, MovieDetailActivity.class);
+        intent.putExtra(BundleKeys.MOVIE, movie);
+        startActivity(intent);
     }
 }

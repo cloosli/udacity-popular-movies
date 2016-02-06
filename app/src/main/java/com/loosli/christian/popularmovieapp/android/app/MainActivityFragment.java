@@ -1,13 +1,16 @@
 package com.loosli.christian.popularmovieapp.android.app;
 
-import android.content.Intent;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -15,8 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.GridView;
+import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
 import com.loosli.christian.popularmovieapp.android.app.data.MovieContract;
@@ -27,6 +29,7 @@ import java.util.Date;
 import java.util.List;
 
 import butterknife.Bind;
+import butterknife.BindDimen;
 import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -35,7 +38,7 @@ import retrofit2.Response;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, SwipeRefreshLayout.OnRefreshListener {
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private static final String STATE_MOVIES = "state_movies";
     private static final String STATE_SORT_CRITERIA = "state_sort_criteria";
@@ -70,16 +73,21 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     static final int COL_MOVIE_RATING = 5;
     static final int COL_MOVIE_RELEASEDATE = 6;
 
-    private MoviesAdapter mMoviesAdapter;
-    private ArrayList<Movie> mMovieList;
-
     @Bind(R.id.main_swipe_refresh_layout)
     SwipeRefreshLayout mSwipeRefreshLayout;
 
+    @Bind(R.id.movies_recycler_view)
+    RecyclerView mRecylerView;
+
+    @BindDimen(R.dimen.movie_thumb_width)
+    int mDesiredColumnWidth;
+
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+    private ArrayList<Movie> mMovieList = new ArrayList<>();
     private int mTotalPages = 1000;
     private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
     private int mStartPage = 0;
-
 
     public enum SortCriteria {
         POPULARITY("popularity.desc"), RATING("vote_average.desc"), FAVORITES("");
@@ -94,28 +102,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         }
     }
 
-
     public MainActivityFragment() {
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        Log.v(LOG_TAG, "onCreate");
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_MOVIES)) {
-            mMovieList = savedInstanceState.getParcelableArrayList(STATE_MOVIES);
-        } else {
-            mMovieList = new ArrayList<>();
-        }
-        Log.v(LOG_TAG, "onCreate > mMovieList size=" + mMovieList.size());
-        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_SORT_CRITERIA)) {
-            mSortCriteria = SortCriteria.valueOf(savedInstanceState.getString(STATE_SORT_CRITERIA));
-        }
-        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_START_PAGE)) {
-            mStartPage = savedInstanceState.getInt(STATE_START_PAGE);
-        }
-        Log.v(LOG_TAG, "onCreate > mStartPage=" + mStartPage + " mSortCriteria=" + mSortCriteria.toString());
     }
 
     @Override
@@ -144,51 +131,70 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+    public void onCreate(Bundle savedInstanceState) {
+        Log.v(LOG_TAG, "onCreate");
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_MOVIES)) {
+            mMovieList = savedInstanceState.getParcelableArrayList(STATE_MOVIES);
+        }
+        Log.v(LOG_TAG, "onCreate > mMovieList size=" + mMovieList.size());
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_SORT_CRITERIA)) {
+            mSortCriteria = SortCriteria.valueOf(savedInstanceState.getString(STATE_SORT_CRITERIA));
+        }
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_START_PAGE)) {
+            mStartPage = savedInstanceState.getInt(STATE_START_PAGE);
+        }
 
+        Log.v(LOG_TAG, "onCreate > mStartPage=" + mStartPage + " mSortCriteria=" + mSortCriteria.toString());
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+        final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         ButterKnife.bind(this, rootView);
-
-        mMoviesAdapter = new MoviesAdapter(getActivity(), mMovieList);
-        Log.v(LOG_TAG, "onCreateView() mMovieList size: " + mMovieList.size() + " mMoviesAdapter size: " + mMoviesAdapter.getCount() + " mStartPage=" + mStartPage);
-//        mProgressBar = (ProgressBar)rootView.findViewById(R.id.progressBar);
-//        mProgressBar.setVisibility(View.GONE);
-        GridView gridView = (GridView) rootView.findViewById(R.id.movies_gridview);
-        gridView.setAdapter(mMoviesAdapter);
-        Log.d(LOG_TAG, "gridView.getNumColumns() = " + gridView.getNumColumns());
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        // improve performance
+        mRecylerView.setHasFixedSize(true);
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Movie movie = mMoviesAdapter.getItem(position);
-                Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
-                intent.putExtra(BundleKeys.MOVIE, movie);
-                getActivity().startActivity(intent);
-//                getActivity().startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle());
-            }
-        });
-        int visibleThreshold = 8;
-        gridView.setOnScrollListener(new EndlessScrollListener(visibleThreshold, mStartPage) {
-            @Override
-            public boolean onLoadMore(int page, int totalItemsCount) {
-                Log.v(LOG_TAG, "EndlessScrollListener.onLoadMore(" + page + ", " + totalItemsCount + ")");
-                if (mSortCriteria == SortCriteria.FAVORITES) {
-                    return true;
+            public void onGlobalLayout() {
+                if (Build.VERSION.SDK_INT < 16) {
+                    rootView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                } else {
+                    rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
-                mStartPage = page - 1;
-                loadMoreMoviesFromApi(page);
-                return true;
+
+                int gridWidth = mRecylerView.getWidth();
+                int optimalColumnCount = Math.max(Math.round((1f * gridWidth) / mDesiredColumnWidth), 1);
+                int actualPosterViewWidth = gridWidth / optimalColumnCount;
+
+                Toast.makeText(getActivity(), "gridWidth=" + gridWidth + ", actualPosterViewWidth:" + actualPosterViewWidth, Toast.LENGTH_SHORT).show();
+
+                mLayoutManager = new GridLayoutManager(mRecylerView.getContext(), optimalColumnCount);
+                mRecylerView.setLayoutManager(mLayoutManager);
+
+                //specify an adapter
+                mAdapter = new MovieAdapter(getActivity(), mMovieList, actualPosterViewWidth, (MovieAdapter.OnMovieClickListener) getActivity());
+                mRecylerView.setAdapter(mAdapter);
             }
         });
-        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                // do nothing!
-                Log.v(LOG_TAG, "onRefresh()");
-//                updateMovies(1);
-                mSwipeRefreshLayout.setRefreshing(false);
-            }
-        });
+
+//        gridView.smoothScrollToPosition(0);
+//        int visibleThreshold = 8;
+//        gridView.setOnScrollListener(new EndlessScrollListener(visibleThreshold, mStartPage) {
+//            @Override
+//            public boolean onLoadMore(int page, int totalItemsCount) {
+//                Log.v(LOG_TAG, "EndlessScrollListener.onLoadMore(" + page + ", " + totalItemsCount + ")");
+//                if (mSortCriteria == SortCriteria.FAVORITES) {
+//                    return true;
+//                }
+//                mStartPage = page - 1;
+//                loadMoreMoviesFromApi(page);
+//                return true;
+//            }
+//        });
+        mSwipeRefreshLayout.setOnRefreshListener(this);
 
         return rootView;
     }
@@ -220,8 +226,14 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         Log.v(LOG_TAG, "onStart()");
         Log.v(LOG_TAG, "onStart() > mMovieList size: " + mMovieList.size() + " mStartPage=" + mStartPage);
         if (mMovieList.isEmpty()) {
-            updateMovies(1);
+            loadMovies(1);
         }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        stopRefreshing();
     }
 
     @Override
@@ -230,24 +242,32 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         ButterKnife.unbind(this);
     }
 
+    @Override
+    public void onRefresh() {
+        Log.v(LOG_TAG, "onRefresh()");
+        loadMovies(1);
+    }
+
+    public void stopRefreshing() {
+        mSwipeRefreshLayout.setRefreshing(false);
+    }
+
     public void setSortCriteria(SortCriteria criteria) {
         if (mSortCriteria != criteria) {
             mSortCriteria = criteria;
-            updateMovies(1);
+            loadMovies(1);
         }
     }
 
-    private void loadMoreMoviesFromApi(int offset) {
-        Log.v(LOG_TAG, "loadMoreMoviesFromApi(" + offset + ")");
-        updateMovies(offset);
-    }
-
-    private void updateMovies(int page) {
-        Log.v(LOG_TAG, "updateMovies(" + page + ") > fetsch more mTotalPages: " + mTotalPages);
+    private void loadMovies(int page) {
+        Log.v(LOG_TAG, "loadMovies(" + page + ") > fetsch more mTotalPages: " + mTotalPages);
         if (page <= 1 && mMovieList.isEmpty() == false) {
-            Log.v(LOG_TAG, "clear mMovieList, mMoviesAdapter size: " + mMoviesAdapter.getCount());
+            Log.v(LOG_TAG, "clear mMovieList, mMoviesAdapter size: " + mAdapter.getItemCount());
             mStartPage = 0;
-            mMoviesAdapter.clearData();
+//            mAdapter.clearData();
+//            mMoviesAdapter.clearData();
+            mMovieList.clear();
+            mAdapter.notifyDataSetChanged();
         }
         if (mSortCriteria == SortCriteria.FAVORITES) {
             getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
@@ -261,19 +281,26 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                 @Override
                 public void onResponse(Response<Movie.Response> response) {
                     Movie.Response moviesResponse = response.body();
-                    List<Movie> movies = moviesResponse.movies;
-                    mTotalPages = moviesResponse.total_pages;
-                    mMoviesAdapter.addAll(movies);
-                    mSwipeRefreshLayout.setRefreshing(false);
-                    Toast.makeText(getActivity(), "finished loading page " + moviesResponse.page, Toast.LENGTH_SHORT).show();
-                    Log.i(LOG_TAG, response.raw().request().url().toString());
+                    try {
+                        List<Movie> movies = moviesResponse.movies;
+                        mTotalPages = moviesResponse.total_pages;
+                        mMovieList.addAll(movies);
+                        mAdapter.notifyDataSetChanged();
+                        mSwipeRefreshLayout.setRefreshing(false);
+                        Toast.makeText(getActivity(), "finished loading page " + moviesResponse.page, Toast.LENGTH_SHORT).show();
+                        Log.i(LOG_TAG, response.raw().request().url().toString());
+                    } catch (NullPointerException e) {
+                        Toast.makeText(getActivity(), "NullPointerException " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                    stopRefreshing();
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    Toast.makeText(getActivity(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                     Log.e(LOG_TAG, t.getMessage(), t);
-                    mSwipeRefreshLayout.setRefreshing(false);
+                    Snackbar.make(getView(), "Error while fetching data", Snackbar.LENGTH_LONG).show();
+                    stopRefreshing();
+                    setSortCriteria(SortCriteria.FAVORITES);
                 }
             });
 
@@ -313,9 +340,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-
         mStartPage = 0;
-        mMoviesAdapter.clearData();
+        mMovieList.clear();
 
         while (cursor.moveToNext()) {
             Movie movie = new Movie();
@@ -334,12 +360,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
             mMovieList.add(movie);
         }
-        mMoviesAdapter.notifyDataSetChanged();
+        mAdapter.notifyDataSetChanged();
+        stopRefreshing();
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
 //        mForecastAdapter.swapCursor(null);
     }
-
 }
