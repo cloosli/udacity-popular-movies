@@ -1,4 +1,4 @@
-package com.loosli.christian.popularmovieapp.android.app;
+package com.loosli.christian.popularmovieapp.android.app.adapter;
 
 import android.widget.AbsListView;
 

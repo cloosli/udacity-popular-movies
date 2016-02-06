@@ -9,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.loosli.christian.popularmovieapp.android.app.adapter.MovieAdapter;
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 
 public class MainActivity extends AppCompatActivity implements MovieAdapter.OnMovieClickListener {

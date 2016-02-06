@@ -1,4 +1,4 @@
-package com.loosli.christian.popularmovieapp.android.app;
+package com.loosli.christian.popularmovieapp.android.app.adapter;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.loosli.christian.popularmovieapp.android.app.R;
 import com.loosli.christian.popularmovieapp.android.app.entity.Movie;
 import com.loosli.christian.popularmovieapp.android.app.util.Util;
 import com.squareup.picasso.Picasso;
