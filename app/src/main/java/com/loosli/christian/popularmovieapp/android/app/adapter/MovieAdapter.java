@@ -22,7 +22,7 @@ import butterknife.ButterKnife;
 /**
  * Created by ChristianL on 06.02.16.
  */
-public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> {
+public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> implements View.OnClickListener {
 
     private static final double TMDB_POSTER_SIZE_RATIO = 185.0 / 277.0;
 
@@ -46,12 +46,13 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> 
     public MovieAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.movie_list_item, parent, false);
+        v.setOnClickListener(this);
         // set the view's size, margins, paddings and layout parameters
         RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) v.getLayoutParams();
         lp.width = mPosterWidth;
         lp.height = mPosterHeight;
         v.setLayoutParams(lp);
-        ViewHolder vh = new ViewHolder(v, mItemClickListener);
+        ViewHolder vh = new ViewHolder(v);
         return vh;
     }
 
@@ -62,15 +63,13 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> 
         Movie movie = mDataset.get(position);
         // - replace the contents of the view with that element
         holder.itemView.setTag(movie);
-//        holder.mTitleView.setText(movie.getTitle());
         String posterUrl = Util.buildPosterUrl(movie.getPosterPath(), mPosterWidth);
         Log.d(LOG_TAG, posterUrl);
         Picasso picasso = Picasso.with(mContext);
         picasso.setIndicatorsEnabled(true);
         picasso.load(posterUrl)
-//                .resizeDimen(R.dimen.movie_thumb_width, R.dimen.movie_thumb_height)
                 .resize(mPosterWidth, mPosterHeight)
-                .placeholder(R.drawable.thumbnail_placeholder)
+                .placeholder(R.color.colorBlueGrey300)
                 .centerCrop()
                 .into(holder.mImageView);
     }
@@ -81,12 +80,19 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> 
         return mDataset.size();
     }
 
+    @Override
+    public void onClick(View v) {
+        Movie movie = (Movie)v.getTag();
+        int position = mDataset.indexOf(movie);
+        mItemClickListener.onMovieClicked(movie, v, position);
+    }
+
     public interface OnMovieClickListener {
-        void onMovieClicked(@NonNull final Movie movie, View view);
+        void onMovieClicked(@NonNull final Movie movie, View view, int position);
 
         OnMovieClickListener DUMMY = new OnMovieClickListener() {
             @Override
-            public void onMovieClicked(@NonNull Movie movie, View view) {
+            public void onMovieClicked(@NonNull Movie movie, View view, int position) {
             }
         };
     }
@@ -94,24 +100,14 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
     // you provide access to all the views for a data item in a view holder
-    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
         @Bind(R.id.movie_item_image)
         ImageView mImageView;
-        //        @Bind(R.id.movie_item_title)
-//        TextView mTitleView;
-        private OnMovieClickListener mClickListener;
 
-        public ViewHolder(View view, OnMovieClickListener onMovieClickListener) {
+        public ViewHolder(View view) {
             super(view);
             ButterKnife.bind(this, view);
-            mClickListener = onMovieClickListener;
-            view.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View v) {
-            mClickListener.onMovieClicked((Movie) v.getTag(), v);
         }
     }
 }

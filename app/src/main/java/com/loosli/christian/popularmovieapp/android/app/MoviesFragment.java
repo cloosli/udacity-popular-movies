@@ -19,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.loosli.christian.popularmovieapp.android.app.adapter.MovieAdapter;
@@ -40,8 +41,10 @@ import retrofit2.Response;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, SwipeRefreshLayout.OnRefreshListener {
-    private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
+public class MoviesFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, SwipeRefreshLayout.OnRefreshListener {
+    private final String LOG_TAG = MoviesFragment.class.getSimpleName();
+
+    private static final String SELECTED_KEY = "selected_position";
     private static final String STATE_MOVIES = "state_movies";
     private static final String STATE_SORT_CRITERIA = "state_sort_criteria";
     private static final String STATE_START_PAGE = "state_start_page";
@@ -90,6 +93,16 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     private int mTotalPages = 1000;
     private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
     private int mStartPage = 0;
+    private boolean mUseTodayLayout;
+    private int mPosition = ListView.INVALID_POSITION;
+
+    public void setUseTodayLayout(boolean useTodayLayout) {
+        mUseTodayLayout = useTodayLayout;
+    }
+
+    public void setPosition(int position) {
+        mPosition = position;
+    }
 
     public enum SortCriteria {
         POPULARITY("popularity.desc"), RATING("vote_average.desc"), FAVORITES("");
@@ -104,7 +117,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         }
     }
 
-    public MainActivityFragment() {
+    public MoviesFragment() {
     }
 
     @Override
@@ -140,15 +153,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         if (savedInstanceState != null && savedInstanceState.containsKey(STATE_MOVIES)) {
             mMovieList = savedInstanceState.getParcelableArrayList(STATE_MOVIES);
         }
-        Log.v(LOG_TAG, "onCreate > mMovieList size=" + mMovieList.size());
         if (savedInstanceState != null && savedInstanceState.containsKey(STATE_SORT_CRITERIA)) {
             mSortCriteria = SortCriteria.valueOf(savedInstanceState.getString(STATE_SORT_CRITERIA));
         }
         if (savedInstanceState != null && savedInstanceState.containsKey(STATE_START_PAGE)) {
             mStartPage = savedInstanceState.getInt(STATE_START_PAGE);
         }
-
-        Log.v(LOG_TAG, "onCreate > mStartPage=" + mStartPage + " mSortCriteria=" + mSortCriteria.toString());
     }
 
     @Override
@@ -167,6 +177,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                     rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
 
+                Log.d(LOG_TAG, "rootView.width:" + rootView.getWidth());
+
                 int gridWidth = mRecylerView.getWidth();
                 int optimalColumnCount = Math.max(Math.round((1f * gridWidth) / mDesiredColumnWidth), 1);
                 int actualPosterViewWidth = gridWidth / optimalColumnCount;
@@ -179,6 +191,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                 //specify an adapter
                 mAdapter = new MovieAdapter(getActivity(), mMovieList, actualPosterViewWidth, (MovieAdapter.OnMovieClickListener) getActivity());
                 mRecylerView.setAdapter(mAdapter);
+
+                if (mPosition != ListView.INVALID_POSITION) {
+                    mRecylerView.getLayoutManager().scrollToPosition(mPosition);
+                }
             }
         });
 
@@ -197,17 +213,34 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 //            }
 //        });
         mSwipeRefreshLayout.setOnRefreshListener(this);
-
+        // If there's instance state, mine it for useful information.
+        // The end-goal here is that the user never knows that turning their device sideways
+        // does crazy lifecycle related things.  It should feel like some stuff stretched out,
+        // or magically appeared to take advantage of room, but data or place in the app was never
+        // actually *lost*.
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
+            // The listview probably hasn't even been populated yet.  Actually perform the
+            // swapout in onLoadFinished.
+            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
         return rootView;
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+
+        // When tablets rotate, the currently selected list item needs to be saved.
+        // When no item is selected, mPosition will be set to Listview.INVALID_POSITION,
+        // so check for that before storing.
+        if (mPosition != ListView.INVALID_POSITION) {
+            outState.putInt(SELECTED_KEY, mPosition);
+        }
         outState.putParcelableArrayList(STATE_MOVIES, mMovieList);
         outState.putString(STATE_SORT_CRITERIA, mSortCriteria.name());
         outState.putInt(STATE_START_PAGE, mStartPage);
         Log.v(LOG_TAG, "onSaveInstanceState() > mStartPage: " + mStartPage);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -271,7 +304,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         }
 
         if (mSortCriteria == SortCriteria.FAVORITES) {
-            getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
+            getLoaderManager().initLoader(MOVIE_LOADER, null, this);
             return;
         }
         if (mTotalPages == 0 || page <= mTotalPages) {
@@ -288,12 +321,16 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                     try {
                         List<Movie> movies = moviesResponse.movies;
                         mTotalPages = moviesResponse.total_pages;
+                        if (mMovieList.isEmpty() && !movies.isEmpty()) {
+                            ((MoviesActivity)getActivity()).showMovieDetails(movies.get(0));
+                        }
                         mMovieList.addAll(movies);
                         mAdapter.notifyDataSetChanged();
                         mSwipeRefreshLayout.setRefreshing(false);
                         Toast.makeText(getActivity(), "finished loading page " + moviesResponse.page, Toast.LENGTH_SHORT).show();
                         Log.i(LOG_TAG, response.raw().request().url().toString());
                     } catch (NullPointerException e) {
+                        Log.e(LOG_TAG, e.getMessage(), e);
                         Toast.makeText(getActivity(), "NullPointerException " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                     stopRefreshing();
@@ -349,7 +386,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
         mStartPage = 0;
         mMovieList.clear();
-
         while (cursor.moveToNext()) {
             Movie movie = new Movie();
 
@@ -368,6 +404,9 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             mMovieList.add(movie);
         }
         mAdapter.notifyDataSetChanged();
+        if (!mMovieList.isEmpty()) {
+            ((MoviesActivity)getActivity()).showMovieDetails(mMovieList.get(0));
+        }
         stopRefreshing();
     }
 
