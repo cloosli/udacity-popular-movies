@@ -93,16 +93,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     private int mTotalPages = 1000;
     private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
     private int mStartPage = 0;
-    private boolean mUseTodayLayout;
     private int mPosition = ListView.INVALID_POSITION;
-
-    public void setUseTodayLayout(boolean useTodayLayout) {
-        mUseTodayLayout = useTodayLayout;
-    }
-
-    public void setPosition(int position) {
-        mPosition = position;
-    }
 
     public enum SortCriteria {
         POPULARITY("popularity.desc"), RATING("vote_average.desc"), FAVORITES("");
@@ -304,7 +295,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         }
 
         if (mSortCriteria == SortCriteria.FAVORITES) {
-            getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+            getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
             return;
         }
         if (mTotalPages == 0 || page <= mTotalPages) {
@@ -349,6 +340,10 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
         } else {
             Log.v(LOG_TAG, "do not load more movies");
         }
+    }
+
+    public void setPosition(int position) {
+        mPosition = position;
     }
 
     /*
