@@ -175,8 +175,6 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                 int optimalColumnCount = Math.max(Math.round((1f * gridWidth) / mDesiredColumnWidth), 1);
                 int actualPosterViewWidth = gridWidth / optimalColumnCount;
 
-                Toast.makeText(getActivity(), "gridWidth=" + gridWidth + ", actualPosterViewWidth:" + actualPosterViewWidth, Toast.LENGTH_SHORT).show();
-
                 mLayoutManager = new GridLayoutManager(mRecylerView.getContext(), optimalColumnCount);
                 mRecylerView.setLayoutManager(mLayoutManager);
 
@@ -196,20 +194,6 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             }
         });
 
-//        gridView.smoothScrollToPosition(0);
-//        int visibleThreshold = 8;
-//        gridView.setOnScrollListener(new EndlessScrollListener(visibleThreshold, mStartPage) {
-//            @Override
-//            public boolean onLoadMore(int page, int totalItemsCount) {
-//                Log.v(LOG_TAG, "EndlessScrollListener.onLoadMore(" + page + ", " + totalItemsCount + ")");
-//                if (mSortCriteria == SortCriteria.FAVORITES) {
-//                    return true;
-//                }
-//                mStartPage = page - 1;
-//                loadMoreMoviesFromApi(page);
-//                return true;
-//            }
-//        });
         mSwipeRefreshLayout.setOnRefreshListener(this);
         // If there's instance state, mine it for useful information.
         // The end-goal here is that the user never knows that turning their device sideways
@@ -417,6 +401,5 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
-//        mForecastAdapter.swapCursor(null);
     }
 }
