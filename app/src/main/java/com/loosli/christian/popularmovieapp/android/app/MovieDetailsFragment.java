@@ -383,7 +383,7 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
                 super.onDeleteComplete(token, cookie, result);
                 mFavFAB.setEnabled(true);
                 updateFavoriteBtn();
-                Toast.makeText(getActivity(), "Delete complete", Toast.LENGTH_SHORT).show();
+                Log.v(LOGTAG, "delete complete");
             }
 
             @Override
@@ -391,17 +391,17 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
                 super.onInsertComplete(token, cookie, uri);
                 mFavFAB.setEnabled(true);
                 updateFavoriteBtn();
-                Toast.makeText(getActivity(), "Insert complete", Toast.LENGTH_SHORT).show();
+                Log.v(LOGTAG, "insert complete");
             }
         };
         if (mMovie.isFavored()) {
-            Toast.makeText(getActivity(), "delete movie", Toast.LENGTH_SHORT).show();
+            Log.v(LOGTAG, "delete movie");
             mMovie.setFavored(false);
             String where = MovieContract.MovieEntry._ID + "=?";
             String[] args = new String[]{String.valueOf(mMovie.getId())};
             handler.startDelete(-1, null, MovieContract.MovieEntry.CONTENT_URI, where, args);
         } else {
-            Toast.makeText(getActivity(), "insert movie", Toast.LENGTH_SHORT).show();
+            Log.v(LOGTAG, "insert movie");
             mMovie.setFavored(true);
             handler.startInsert(-1, null, MovieContract.MovieEntry.CONTENT_URI, new Movie.Builder().movie(mMovie).build());
         }
