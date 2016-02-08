@@ -196,7 +196,6 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
             }
         });
 
-
 //        gridView.smoothScrollToPosition(0);
 //        int visibleThreshold = 8;
 //        gridView.setOnScrollListener(new EndlessScrollListener(visibleThreshold, mStartPage) {
@@ -330,8 +329,6 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                         int curSize = mAdapter.getItemCount();
                         mAdapter.notifyItemRangeInserted(curSize, mMovieList.size() - 1);
                         mSwipeRefreshLayout.setRefreshing(false);
-
-                        Toast.makeText(getActivity(), "finished loading page " + moviesResponse.page, Toast.LENGTH_SHORT).show();
                         Log.i(LOG_TAG, response.raw().request().url().toString());
                     } catch (NullPointerException e) {
                         Log.e(LOG_TAG, e.getMessage(), e);

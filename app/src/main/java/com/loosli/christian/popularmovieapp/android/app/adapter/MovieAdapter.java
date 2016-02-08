@@ -66,7 +66,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.ViewHolder> 
         String posterUrl = Util.buildPosterUrl(movie.getPosterPath(), mPosterWidth);
         Log.d(LOG_TAG, posterUrl);
         Picasso picasso = Picasso.with(mContext);
-        picasso.setIndicatorsEnabled(true);
         picasso.load(posterUrl)
                 .resize(mPosterWidth, mPosterHeight)
                 .placeholder(R.color.colorBlueGrey300)
