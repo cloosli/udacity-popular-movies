@@ -352,8 +352,27 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
         }
     }
 
-    @OnClick(R.id.fab_fav)
-    public void fabClicked(FloatingActionButton fab) {
+    @Override
+    @OnClick({R.id.fab_trailer, R.id.fab_fav})
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.review_link:
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse((String) v.getTag()));
+                startActivity(intent);
+                break;
+            case R.id.fab_trailer:
+            case R.id.video_thumb:
+                if (v.getTag() != null) {
+                    watchYoutubeVideo((String) v.getTag());
+                }
+                break;
+            case R.id.fab_fav:
+                favoriteFABClicked();
+                break;
+        }
+    }
+
+    private void favoriteFABClicked() {
         if (mMovie == null) {
             return;
         }
@@ -389,23 +408,6 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
     }
 
     @Override
-    @OnClick(R.id.fab_trailer)
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.review_link:
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse((String) v.getTag()));
-                startActivity(intent);
-                break;
-            case R.id.fab_trailer:
-            case R.id.video_thumb:
-                if (v.getTag() != null) {
-                    watchYoutubeVideo((String) v.getTag());
-                }
-                break;
-        }
-    }
-
-    @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         Log.d(LOGTAG, "onCreateLoader isFavored:" + mMovie.isFavored());
         // Now create and return a CursorLoader that will take care of
@@ -430,7 +432,7 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
         } else {
             mMovie.setFavored(false);
         }
-        Log.d(LOGTAG, "onLoadFinished " + mMovie.getId() + " dataCount: " + data.getCount()+ " f: " + mMovie.isFavored());
+        Log.d(LOGTAG, "onLoadFinished " + mMovie.getId() + " dataCount: " + data.getCount() + " f: " + mMovie.isFavored());
         updateFavoriteBtn();
         mFavFAB.setEnabled(true);
     }
