@@ -175,6 +175,7 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
 
     private void updateMovieDetails() {
         Log.i(LOGTAG, "updateMovieDetails");
+        getActivity().setTitle(mMovie.getTitle());
         updateFavoriteBtn();
         updateShareBtn();
         if (!mMovie.isFavored()) {
