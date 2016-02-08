@@ -259,43 +259,6 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
         ButterKnife.unbind(this);
     }
 
-    @OnClick(R.id.fab_fav)
-    public void fabClicked(FloatingActionButton fab) {
-        if (mMovie == null) {
-            return;
-        }
-        mFavFAB.setEnabled(false);
-        AsyncQueryHandler handler = new AsyncQueryHandler(getActivity().getContentResolver()) {
-            @Override
-            protected void onDeleteComplete(int token, Object cookie, int result) {
-                super.onDeleteComplete(token, cookie, result);
-                mFavFAB.setEnabled(true);
-                updateFavoriteBtn();
-                Toast.makeText(getActivity(), "Delete complete", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            protected void onInsertComplete(int token, Object cookie, Uri uri) {
-                super.onInsertComplete(token, cookie, uri);
-                mFavFAB.setEnabled(true);
-                updateFavoriteBtn();
-                Toast.makeText(getActivity(), "Insert complete", Toast.LENGTH_SHORT).show();
-            }
-        };
-        if (mMovie.isFavored()) {
-            Toast.makeText(getActivity(), "delete movie", Toast.LENGTH_SHORT).show();
-            mMovie.setFavored(false);
-            String where = MovieContract.MovieEntry._ID + "=?";
-            String[] args = new String[]{String.valueOf(mMovie.getId())};
-            handler.startDelete(-1, null, MovieContract.MovieEntry.CONTENT_URI, where, args);
-        } else {
-            Toast.makeText(getActivity(), "insert movie", Toast.LENGTH_SHORT).show();
-            mMovie.setFavored(true);
-            handler.startInsert(-1, null, MovieContract.MovieEntry.CONTENT_URI, new Movie.Builder().movie(mMovie).build());
-        }
-    }
-
-
     private void fetchReviewsList(TheMovieDBService.TMDBAPI tmdbapi) {
         Call<Review.Response> call = tmdbapi.getReviews(Long.toString(mMovie.getId()));
         call.enqueue(new Callback<Review.Response>() {
@@ -357,7 +320,7 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
                 continue;
             }
             if (mTrailerFAB.getTag() == null) {
-                mTrailerFAB.setTag(trailer);
+                mTrailerFAB.setTag(trailer.getKey());
                 // update the share intent
                 updateShareBtn();
             }
@@ -389,6 +352,42 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
         }
     }
 
+    @OnClick(R.id.fab_fav)
+    public void fabClicked(FloatingActionButton fab) {
+        if (mMovie == null) {
+            return;
+        }
+        mFavFAB.setEnabled(false);
+        AsyncQueryHandler handler = new AsyncQueryHandler(getActivity().getContentResolver()) {
+            @Override
+            protected void onDeleteComplete(int token, Object cookie, int result) {
+                super.onDeleteComplete(token, cookie, result);
+                mFavFAB.setEnabled(true);
+                updateFavoriteBtn();
+                Toast.makeText(getActivity(), "Delete complete", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            protected void onInsertComplete(int token, Object cookie, Uri uri) {
+                super.onInsertComplete(token, cookie, uri);
+                mFavFAB.setEnabled(true);
+                updateFavoriteBtn();
+                Toast.makeText(getActivity(), "Insert complete", Toast.LENGTH_SHORT).show();
+            }
+        };
+        if (mMovie.isFavored()) {
+            Toast.makeText(getActivity(), "delete movie", Toast.LENGTH_SHORT).show();
+            mMovie.setFavored(false);
+            String where = MovieContract.MovieEntry._ID + "=?";
+            String[] args = new String[]{String.valueOf(mMovie.getId())};
+            handler.startDelete(-1, null, MovieContract.MovieEntry.CONTENT_URI, where, args);
+        } else {
+            Toast.makeText(getActivity(), "insert movie", Toast.LENGTH_SHORT).show();
+            mMovie.setFavored(true);
+            handler.startInsert(-1, null, MovieContract.MovieEntry.CONTENT_URI, new Movie.Builder().movie(mMovie).build());
+        }
+    }
+
     @Override
     @OnClick(R.id.fab_trailer)
     public void onClick(View v) {
@@ -400,7 +399,7 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
             case R.id.fab_trailer:
             case R.id.video_thumb:
                 if (v.getTag() != null) {
-                    watchYoutubeVideo(((Video) v.getTag()).getKey());
+                    watchYoutubeVideo((String) v.getTag());
                 }
                 break;
         }
