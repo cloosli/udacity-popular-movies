@@ -22,6 +22,7 @@ import android.view.ViewTreeObserver;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.loosli.christian.popularmovieapp.android.app.adapter.EndlessRecyclerViewScrollListener;
 import com.loosli.christian.popularmovieapp.android.app.adapter.MovieAdapter;
 import com.loosli.christian.popularmovieapp.android.app.api.TheMovieDBService;
 import com.loosli.christian.popularmovieapp.android.app.data.MovieContract;
@@ -88,7 +89,7 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
     int mDesiredColumnWidth;
 
     private RecyclerView.Adapter mAdapter;
-    private RecyclerView.LayoutManager mLayoutManager;
+    private GridLayoutManager mLayoutManager;
     private ArrayList<Movie> mMovieList = new ArrayList<>();
     private int mTotalPages = 1000;
     private SortCriteria mSortCriteria = SortCriteria.POPULARITY;
@@ -186,8 +187,15 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                 if (mPosition != ListView.INVALID_POSITION) {
                     mRecylerView.getLayoutManager().scrollToPosition(mPosition);
                 }
+                mRecylerView.addOnScrollListener(new EndlessRecyclerViewScrollListener(mLayoutManager) {
+                    @Override
+                    public void onLoadMore(int page, int totalItemsCount) {
+                        loadMovies(page+1);
+                    }
+                });
             }
         });
+
 
 //        gridView.smoothScrollToPosition(0);
 //        int visibleThreshold = 8;
@@ -316,8 +324,13 @@ public class MoviesFragment extends Fragment implements LoaderManager.LoaderCall
                             ((MoviesActivity)getActivity()).showMovieDetails(movies.get(0));
                         }
                         mMovieList.addAll(movies);
-                        mAdapter.notifyDataSetChanged();
+//                        mAdapter.notifyDataSetChanged();
+                        // For efficiency purposes, notify the adapter of only the elements that got changed
+                        // curSize will equal to the index of the first element inserted because the list is 0-indexed
+                        int curSize = mAdapter.getItemCount();
+                        mAdapter.notifyItemRangeInserted(curSize, mMovieList.size() - 1);
                         mSwipeRefreshLayout.setRefreshing(false);
+
                         Toast.makeText(getActivity(), "finished loading page " + moviesResponse.page, Toast.LENGTH_SHORT).show();
                         Log.i(LOG_TAG, response.raw().request().url().toString());
                     } catch (NullPointerException e) {
