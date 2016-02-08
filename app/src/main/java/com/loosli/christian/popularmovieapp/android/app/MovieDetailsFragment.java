@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -86,8 +87,8 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
     @Bind(R.id.detail_movie_reviews)
     LinearLayout mReviewsLayout;
 
-    @Bind(R.id.fab_trailer)
-    FloatingActionButton mTrailerFAB;
+    @Bind(R.id.play_button)
+    ImageButton mPlayButton;
 
     @Bind(R.id.fab_fav)
     FloatingActionButton mFavFAB;
@@ -233,7 +234,7 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_share) {
-            if (mTrailerFAB.getTag() != null) {
+            if (mPlayButton.getTag() != null) {
                 getActivity().startActivity(Intent.createChooser(createShareTrailerIntent(), getResources().getString(R.string.title_share_trailer)));
             }
         }
@@ -311,7 +312,7 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
     private void updateTrailers(List<Video> trailers) {
         mVideos = trailers;
         mVideosLayout.removeAllViews();
-        mTrailerFAB.setTag(null);
+        mPlayButton.setTag(null);
         LayoutInflater inflater = getActivity().getLayoutInflater();
         Picasso picasso = Picasso.with(getActivity());
         for (Video trailer : trailers) {
@@ -319,8 +320,8 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
                 Log.i(LOGTAG, "no youtube trailer");
                 continue;
             }
-            if (mTrailerFAB.getTag() == null) {
-                mTrailerFAB.setTag(trailer.getKey());
+            if (mPlayButton.getTag() == null) {
+                mPlayButton.setTag(trailer.getKey());
                 // update the share intent
                 updateShareBtn();
             }
@@ -353,14 +354,14 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
     }
 
     @Override
-    @OnClick({R.id.fab_trailer, R.id.fab_fav})
+    @OnClick({R.id.play_button, R.id.fab_fav})
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.review_link:
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse((String) v.getTag()));
                 startActivity(intent);
                 break;
-            case R.id.fab_trailer:
+            case R.id.play_button:
             case R.id.video_thumb:
                 if (v.getTag() != null) {
                     watchYoutubeVideo((String) v.getTag());
@@ -455,7 +456,7 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
         shareIntent.setType("text/plain");
-        Video trailer = (Video) mTrailerFAB.getTag();
+        Video trailer = (Video) mPlayButton.getTag();
         String text = getResources().getString(R.string.share_template, trailer.getName(), " http://www.youtube.com/watch?v=" + trailer.getKey());
         shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         return shareIntent;
@@ -468,13 +469,13 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
         mMovie = movie;
         updateTrailers(Collections.EMPTY_LIST);
         updateReviews(Collections.EMPTY_LIST);
-        mTrailerFAB.setTag(null);
+        mPlayButton.setTag(null);
         updateMovieDetails();
     }
 
     private void updateShareBtn() {
         if (mMenuItemShare != null) {
-            mMenuItemShare.setVisible(mTrailerFAB.getTag() != null);
+            mMenuItemShare.setVisible(mPlayButton.getTag() != null);
         }
     }
 
