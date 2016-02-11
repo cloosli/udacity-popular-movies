@@ -74,10 +74,13 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
 
     @Bind(R.id.title)
     TextView mTitle;
+
     @Bind(R.id.release_date)
     TextView mReleaseDate;
+
     @Bind(R.id.rating)
     TextView mRating;
+
     @Bind(R.id.synopsis)
     TextView mOverview;
 
@@ -322,13 +325,13 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
                 continue;
             }
             if (mPlayButton.getTag() == null) {
-                mPlayButton.setTag(trailer.getKey());
+                mPlayButton.setTag(trailer);
                 // update the share intent
                 updateShareBtn();
             }
             ViewGroup thumbContainer = (ViewGroup) inflater.inflate(R.layout.detail_movie_video, mVideosLayout, false);
             ImageView thumbView = (ImageView) thumbContainer.findViewById(R.id.video_thumb);
-            thumbView.setTag(trailer.getKey());
+            thumbView.setTag(trailer);
             thumbView.setOnClickListener(this);
             picasso.load(Video.getThumbnailUrl(trailer))
                     .resizeDimen(R.dimen.video_width, R.dimen.video_height)
@@ -365,7 +368,7 @@ public class MovieDetailsFragment extends Fragment implements View.OnClickListen
             case R.id.play_button:
             case R.id.video_thumb:
                 if (v.getTag() != null) {
-                    watchYoutubeVideo((String) v.getTag());
+                    watchYoutubeVideo(((Video) v.getTag()).getKey());
                 }
                 break;
             case R.id.fab_fav:
